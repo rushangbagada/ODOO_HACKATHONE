@@ -77,6 +77,7 @@ export default function Dashboard() {
 
   const { metrics, alerts, tripsByStatus, fleetComposition, utilizationTrend, filterOptions } = data;
   const canSendReminders = user?.role === "FLEET_MANAGER" || user?.role === "SAFETY_OFFICER";
+  const isSafetyOfficer = user?.role === "SAFETY_OFFICER";
 
   // Custom tooltip to avoid rendering objects
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -111,6 +112,20 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {isSafetyOfficer && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+          <div className="flex items-start gap-3">
+            <AlertCircle size={18} className="mt-0.5 shrink-0" />
+            <div>
+              <p className="font-semibold">Safety Officer compliance view</p>
+              <p className="text-sm">
+                You are seeing the live compliance signals that matter for dispatch decisions: license expiry, active maintenance, and driver safety posture.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
 

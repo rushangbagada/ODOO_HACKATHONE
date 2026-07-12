@@ -83,6 +83,8 @@ export default function MaintenancePage() {
 
   if (loading) return <div className="text-center py-8">Loading...</div>;
 
+  const isSafetyOfficer = user?.role === "SAFETY_OFFICER";
+
   const getStatusColor = (status: string) => {
     return status === "ACTIVE"
       ? "bg-blue-100 text-blue-800"
@@ -91,6 +93,15 @@ export default function MaintenancePage() {
 
   return (
     <div className="space-y-6">
+      {isSafetyOfficer && (
+        <div className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sky-900 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-200">
+          <p className="font-semibold">Maintenance safety monitoring</p>
+          <p className="text-sm mt-1">
+            Active maintenance logs are reviewed here to keep unsafe vehicles off the road until work is closed and signed off.
+          </p>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Maintenance</h1>
         {user?.role === "FLEET_MANAGER" ? (

@@ -94,11 +94,21 @@ export default function FuelExpensesPage() {
 
   if (loading) return <div className="text-center py-8">Loading...</div>;
 
+  const isSafetyOfficer = user?.role === "SAFETY_OFFICER";
   const totalFuelCost = fuelLogs.reduce((sum, log) => sum + log.cost, 0);
   const totalExpenseCost = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
   return (
     <div className="space-y-6">
+      {isSafetyOfficer && (
+        <div className="rounded-lg border border-violet-200 bg-violet-50 p-4 text-violet-900 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-200">
+          <p className="font-semibold">Safety review access</p>
+          <p className="text-sm mt-1">
+            Fuel and expense history is available in read-only mode to help correlate unusual usage with trip risk and driver behavior.
+          </p>
+        </div>
+      )}
+
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Fuel & Expenses</h1>
 
       {/* Tabs */}

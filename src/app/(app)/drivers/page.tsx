@@ -129,6 +129,7 @@ export default function DriversPage() {
   };
 
   const canCreateDrivers = user?.role === "FLEET_MANAGER";
+  const isSafetyOfficer = user?.role === "SAFETY_OFFICER";
 
   const SortHeader = ({ field, children }: { field: string; children: React.ReactNode }) => (
     <th
@@ -158,10 +159,21 @@ export default function DriversPage() {
           </button>
         ) : (
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            Only Fleet Managers can create drivers
+            {isSafetyOfficer
+              ? "Safety officers can update safety scores and driver status"
+              : "Only Fleet Managers can create drivers"}
           </div>
         )}
       </div>
+
+      {isSafetyOfficer && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200">
+          <p className="font-semibold">Driver compliance workspace</p>
+          <p className="text-sm mt-1">
+            Review license expiry, adjust safety scores, and suspend or reinstate drivers before they are assigned to any trip.
+          </p>
+        </div>
+      )}
 
       {/* Search & Filters */}
       <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
