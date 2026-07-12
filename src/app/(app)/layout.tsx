@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 
 export default async function AppLayout({
@@ -20,12 +19,13 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
-      <Sidebar user={user} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Topbar user={user} />
-        <main className="flex-1 overflow-auto p-6">{children}</main>
-      </div>
+    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Topbar user={user} />
+      <main className="flex-1 overflow-auto p-6">
+        <div className="max-w-7xl mx-auto">
+          {children}
+        </div>
+      </main>
     </div>
   );
 }

@@ -1,28 +1,30 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/layout/navbar";
+import { AuthNavbar } from "@/components/layout/auth-navbar";
+import { getSession } from "@/lib/auth";
 import { Toaster } from "react-hot-toast";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Full-Stack Auth Boilerplate",
-  description: "A production-ready authentication boilerplate using Next.js, Prisma, and JWT.",
+  title: "TransitOps - Fleet Management",
+  description: "Manage your fleet operations efficiently with TransitOps. Track vehicles, drivers, trips, and analytics.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession();
+  const isAuthenticated = !!session;
+
   return (
     <html lang="en">
-      <body className={`${inter.className} min-h-screen bg-white dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 antialiased`}>
-        <Navbar />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {children}
-        </main>
+      <body className={`${inter.className} bg-white dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 antialiased`}>
+        {!isAuthenticated && <AuthNavbar />}
+        {children}
         <Toaster position="top-right" />
       </body>
     </html>

@@ -45,7 +45,7 @@ export const Navbar = () => {
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center">
             <Link href="/" className="text-xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tight hover:opacity-90 transition-opacity">
-              AuthBoilerplate
+              TransitOps
             </Link>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8 h-16">
               <Link
