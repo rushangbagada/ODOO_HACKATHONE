@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { Plus, CheckCircle } from "lucide-react";
+import { LoadingPage } from "@/components/ui/loading";
+import { Badge } from "@/components/ui/badge";
 
 export default function MaintenancePage() {
   const [logs, setLogs] = useState<any[]>([]);
@@ -81,12 +83,12 @@ export default function MaintenancePage() {
     }
   };
 
-  if (loading) return <div className="text-center py-8">Loading...</div>;
+  if (loading) return <LoadingPage />;
 
   const getStatusColor = (status: string) => {
     return status === "ACTIVE"
-      ? "bg-blue-100 text-blue-800"
-      : "bg-gray-100 text-gray-800";
+      ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+      : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
   };
 
   return (
@@ -96,7 +98,7 @@ export default function MaintenancePage() {
         {user?.role === "FLEET_MANAGER" ? (
           <button
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
           >
             <Plus size={20} />
             New Maintenance Log
@@ -107,12 +109,12 @@ export default function MaintenancePage() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <select
               value={formData.vehicleId}
               onChange={(e) => setFormData({ ...formData, vehicleId: e.target.value })}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               required
             >
               <option value="">Select Vehicle</option>
@@ -127,7 +129,7 @@ export default function MaintenancePage() {
               placeholder="Maintenance Type"
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               required
             />
             <input
@@ -135,22 +137,22 @@ export default function MaintenancePage() {
               placeholder="Description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
             />
             <input
               type="number"
               placeholder="Cost"
               value={formData.cost}
               onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               required
             />
           </div>
-          <div className="flex gap-2">
-            <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+          <div className="flex gap-3 pt-2">
+            <button type="submit" className="bg-green-600 text-white px-6 py-2.5 rounded-full hover:bg-green-700 transition-all shadow-md font-medium">
               Save
             </button>
-            <button type="button" onClick={() => setShowForm(false)} className="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500">
+            <button type="button" onClick={() => setShowForm(false)} className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2.5 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition-all font-medium">
               Cancel
             </button>
           </div>
@@ -159,33 +161,33 @@ export default function MaintenancePage() {
 
       <div className="grid gap-4">
         {logs.map((log) => (
-          <div key={log.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border-l-4 border-blue-400">
+          <div key={log.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-3 mb-2">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                     {log.vehicle.name}
                   </h3>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(log.status)}`}>
+                  <Badge variant={log.status === "ACTIVE" ? "info" : "default"}>
                     {log.status}
-                  </span>
+                  </Badge>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                  <strong>Type:</strong> {log.type}
+                  <span className="font-medium">Type:</span> {log.type}
                 </p>
                 {log.description && (
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                    <strong>Description:</strong> {log.description}
+                    <span className="font-medium">Description:</span> {log.description}
                   </p>
                 )}
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  <strong>Cost:</strong> ₹{log.cost} | <strong>Start:</strong> {new Date(log.startDate).toLocaleDateString()}
+                  <span className="font-medium">Cost:</span> ₹{log.cost} | <span className="font-medium">Start:</span> {new Date(log.startDate).toLocaleDateString()}
                 </p>
               </div>
               {log.status === "ACTIVE" && (
                 <button
                   onClick={() => handleClose(log.id)}
-                  className="flex items-center gap-1 bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                  className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-full text-sm hover:bg-green-700 transition-all shadow-sm font-medium"
                 >
                   <CheckCircle size={14} /> Close
                 </button>

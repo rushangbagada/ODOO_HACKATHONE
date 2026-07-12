@@ -5,6 +5,8 @@ import Link from "next/link";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { Plus, Eye, Pencil, Archive, ArrowUp, ArrowDown, Search } from "lucide-react";
+import { LoadingPage } from "@/components/ui/loading";
+import { Badge } from "@/components/ui/badge";
 
 const emptyForm = {
   regNumber: "",
@@ -174,29 +176,29 @@ export default function VehiclesPage() {
     </th>
   );
 
-  if (loading) return <div className="text-center py-8">Loading...</div>;
+  if (loading) return <LoadingPage />;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Vehicles</h1>
         {canManageVehicles ? (
           <button
             onClick={openCreateForm}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-full hover:bg-indigo-700 transition-all duration-200 font-semibold shadow-md hover:shadow-lg hover:-translate-y-0.5"
           >
             <Plus size={20} />
             New Vehicle
           </button>
         ) : (
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Only Fleet Managers can create vehicles
+          <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
+            View Only Access
           </div>
         )}
       </div>
 
       {/* Search & Filters */}
-      <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+      <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-gray-800 p-4 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -326,9 +328,9 @@ export default function VehiclesPage() {
         </form>
       )}
 
-      <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow">
+      <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
         <table className="w-full">
-          <thead className="bg-gray-50 dark:bg-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700/50">
             <tr>
               <SortHeader field="regNumber">Reg Number</SortHeader>
               <SortHeader field="name">Name</SortHeader>
@@ -342,38 +344,46 @@ export default function VehiclesPage() {
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {vehicles.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                  No vehicles match your filters.
+                <td colSpan={7} className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <div className="flex flex-col items-center gap-2">
+                    <Search size={40} className="text-gray-300 dark:text-gray-600" />
+                    <p className="font-medium">No vehicles found</p>
+                    <p className="text-xs">Try adjusting your filters</p>
+                  </div>
                 </td>
               </tr>
             )}
             {vehicles.map((vehicle) => (
-              <tr key={vehicle.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{vehicle.regNumber}</td>
+              <tr key={vehicle.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{vehicle.regNumber}</td>
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{vehicle.name}</td>
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{vehicle.type}</td>
+                <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{vehicle.type}</td>
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{vehicle.maxLoadCapacity} kg</td>
                 <td className="px-6 py-4 text-sm">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(vehicle.status)}`}>
-                    {vehicle.status}
-                  </span>
+                  <Badge variant={
+                    vehicle.status === "AVAILABLE" ? "success" :
+                    vehicle.status === "ON_TRIP" ? "info" :
+                    vehicle.status === "IN_SHOP" ? "warning" : "default"
+                  }>
+                    {vehicle.status.replace(/_/g, " ")}
+                  </Badge>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{vehicle.region || "—"}</td>
                 <td className="px-6 py-4 text-sm">
                   <div className="flex items-center gap-3">
-                    <Link href={`/vehicles/${vehicle.id}`} className="text-indigo-600 hover:text-indigo-700" title="View">
+                    <Link href={`/vehicles/${vehicle.id}`} className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors" title="View Details">
                       <Eye size={18} />
                     </Link>
                     {canManageVehicles && (
                       <>
-                        <button onClick={() => openEditForm(vehicle)} className="text-amber-600 hover:text-amber-700" title="Edit">
+                        <button onClick={() => openEditForm(vehicle)} className="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors" title="Edit">
                           <Pencil size={18} />
                         </button>
                         {vehicle.status !== "RETIRED" && (
                           <button
                             onClick={() => handleRetire(vehicle)}
-                            className="text-red-600 hover:text-red-700"
-                            title="Retire"
+                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Retire Vehicle"
                             disabled={vehicle.status === "ON_TRIP"}
                           >
                             <Archive size={18} className={vehicle.status === "ON_TRIP" ? "opacity-30 cursor-not-allowed" : ""} />

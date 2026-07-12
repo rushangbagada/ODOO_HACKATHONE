@@ -5,6 +5,7 @@ import axios from "axios";
 import { Truck, AlertCircle, TrendingUp, Clock, Mail } from "lucide-react";
 import toast from "react-hot-toast";
 import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { LoadingPage } from "@/components/ui/loading";
 
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
@@ -63,14 +64,7 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
-    );
+    return <LoadingPage />;
   }
 
   if (!data) return <div>Error loading data</div>;

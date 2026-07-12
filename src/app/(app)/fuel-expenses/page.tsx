@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { Plus } from "lucide-react";
+import { LoadingPage } from "@/components/ui/loading";
 
 export default function FuelExpensesPage() {
   const [fuelLogs, setFuelLogs] = useState<any[]>([]);
@@ -92,7 +93,7 @@ export default function FuelExpensesPage() {
     }
   };
 
-  if (loading) return <div className="text-center py-8">Loading...</div>;
+  if (loading) return <LoadingPage />;
 
   const totalFuelCost = fuelLogs.reduce((sum, log) => sum + log.cost, 0);
   const totalExpenseCost = expenses.reduce((sum, exp) => sum + exp.amount, 0);
@@ -102,23 +103,23 @@ export default function FuelExpensesPage() {
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Fuel & Expenses</h1>
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
         <button
           onClick={() => setActiveTab("fuel")}
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+          className={`px-5 py-3 font-semibold border-b-2 transition-all ${
             activeTab === "fuel"
-              ? "border-indigo-600 text-indigo-600"
-              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900"
+              ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
+              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600"
           }`}
         >
           Fuel Logs ({fuelLogs.length})
         </button>
         <button
           onClick={() => setActiveTab("expenses")}
-          className={`px-4 py-2 font-medium border-b-2 transition-colors ${
+          className={`px-5 py-3 font-semibold border-b-2 transition-all ${
             activeTab === "expenses"
-              ? "border-indigo-600 text-indigo-600"
-              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900"
+              ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
+              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600"
           }`}
         >
           Expenses ({expenses.length})
@@ -129,14 +130,14 @@ export default function FuelExpensesPage() {
       {activeTab === "fuel" && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Fuel Cost</p>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Fuel Cost</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">₹{totalFuelCost.toFixed(2)}</p>
             </div>
             {user?.role === "FLEET_MANAGER" || user?.role === "DRIVER" || user?.role === "FINANCIAL_ANALYST" ? (
               <button
                 onClick={() => setShowFuelForm(!showFuelForm)}
-                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
               >
                 <Plus size={20} />
                 Add Fuel Log
@@ -147,12 +148,12 @@ export default function FuelExpensesPage() {
           </div>
 
           {showFuelForm && (
-            <form onSubmit={handleFuelSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
+            <form onSubmit={handleFuelSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <select
                   value={fuelFormData.vehicleId}
                   onChange={(e) => setFuelFormData({ ...fuelFormData, vehicleId: e.target.value })}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   required
                 >
                   <option value="">Select Vehicle</option>
@@ -168,7 +169,7 @@ export default function FuelExpensesPage() {
                   placeholder="Liters"
                   value={fuelFormData.liters}
                   onChange={(e) => setFuelFormData({ ...fuelFormData, liters: e.target.value })}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   required
                 />
                 <input
@@ -177,38 +178,38 @@ export default function FuelExpensesPage() {
                   placeholder="Cost"
                   value={fuelFormData.cost}
                   onChange={(e) => setFuelFormData({ ...fuelFormData, cost: e.target.value })}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   required
                 />
               </div>
-              <div className="flex gap-2">
-                <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+              <div className="flex gap-3 pt-2">
+                <button type="submit" className="bg-green-600 text-white px-6 py-2.5 rounded-full hover:bg-green-700 transition-all shadow-md font-medium">
                   Save
                 </button>
-                <button type="button" onClick={() => setShowFuelForm(false)} className="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500">
+                <button type="button" onClick={() => setShowFuelForm(false)} className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2.5 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition-all font-medium">
                   Cancel
                 </button>
               </div>
             </form>
           )}
 
-          <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Vehicle</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Liters</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Cost</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Vehicle</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Liters</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Cost</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {fuelLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{log.vehicle.name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{log.liters}L</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">₹{log.cost.toFixed(2)}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{new Date(log.date).toLocaleDateString()}</td>
+                  <tr key={log.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{log.vehicle.name}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{log.liters}L</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">₹{log.cost.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{new Date(log.date).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -221,14 +222,14 @@ export default function FuelExpensesPage() {
       {activeTab === "expenses" && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Expenses</p>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Expenses</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">₹{totalExpenseCost.toFixed(2)}</p>
             </div>
             {user?.role === "FLEET_MANAGER" || user?.role === "FINANCIAL_ANALYST" ? (
               <button
                 onClick={() => setShowExpenseForm(!showExpenseForm)}
-                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
               >
                 <Plus size={20} />
                 Add Expense
@@ -239,12 +240,12 @@ export default function FuelExpensesPage() {
           </div>
 
           {showExpenseForm && (
-            <form onSubmit={handleExpenseSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
+            <form onSubmit={handleExpenseSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <select
                   value={expenseFormData.vehicleId}
                   onChange={(e) => setExpenseFormData({ ...expenseFormData, vehicleId: e.target.value })}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   required
                 >
                   <option value="">Select Vehicle</option>
@@ -257,7 +258,7 @@ export default function FuelExpensesPage() {
                 <select
                   value={expenseFormData.type}
                   onChange={(e) => setExpenseFormData({ ...expenseFormData, type: e.target.value as any })}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 >
                   <option value="TOLL">Toll</option>
                   <option value="MAINTENANCE">Maintenance</option>
@@ -269,7 +270,7 @@ export default function FuelExpensesPage() {
                   placeholder="Amount"
                   value={expenseFormData.amount}
                   onChange={(e) => setExpenseFormData({ ...expenseFormData, amount: e.target.value })}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                   required
                 />
                 <input
@@ -277,39 +278,39 @@ export default function FuelExpensesPage() {
                   placeholder="Description (optional)"
                   value={expenseFormData.description}
                   onChange={(e) => setExpenseFormData({ ...expenseFormData, description: e.target.value })}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 />
               </div>
-              <div className="flex gap-2">
-                <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+              <div className="flex gap-3 pt-2">
+                <button type="submit" className="bg-green-600 text-white px-6 py-2.5 rounded-full hover:bg-green-700 transition-all shadow-md font-medium">
                   Save
                 </button>
-                <button type="button" onClick={() => setShowExpenseForm(false)} className="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500">
+                <button type="button" onClick={() => setShowExpenseForm(false)} className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2.5 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition-all font-medium">
                   Cancel
                 </button>
               </div>
             </form>
           )}
 
-          <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow">
+          <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
             <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700/50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Vehicle</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Type</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Amount</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Description</th>
-                  <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Date</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Vehicle</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Type</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Amount</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Description</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {expenses.map((exp) => (
-                  <tr key={exp.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{exp.vehicle.name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{exp.type}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">₹{exp.amount.toFixed(2)}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{exp.description}</td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{new Date(exp.date).toLocaleDateString()}</td>
+                  <tr key={exp.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{exp.vehicle.name}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{exp.type}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">₹{exp.amount.toFixed(2)}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{exp.description}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">{new Date(exp.date).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { Plus, CheckCircle, Zap, X } from "lucide-react";
+import { LoadingPage } from "@/components/ui/loading";
+import { Badge } from "@/components/ui/badge";
 
 export default function TripsPage() {
   const [trips, setTrips] = useState<any[]>([]);
@@ -157,14 +159,14 @@ export default function TripsPage() {
     }
   };
 
-  if (loading) return <div className="text-center py-8">Loading...</div>;
+  if (loading) return <LoadingPage />;
 
   const getStatusColor = (status: string) => {
     const colors: any = {
-      DRAFT: "bg-gray-100 text-gray-800",
-      DISPATCHED: "bg-blue-100 text-blue-800",
-      COMPLETED: "bg-green-100 text-green-800",
-      CANCELLED: "bg-red-100 text-red-800",
+      DRAFT: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
+      DISPATCHED: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+      COMPLETED: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+      CANCELLED: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
     };
     return colors[status] || "bg-gray-100 text-gray-800";
   };
@@ -193,7 +195,7 @@ export default function TripsPage() {
         {canCreateTrips ? (
           <button
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+            className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
           >
             <Plus size={20} />
             New Trip
@@ -206,14 +208,14 @@ export default function TripsPage() {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               type="text"
               placeholder="Source"
               value={formData.source}
               onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               required
             />
             <input
@@ -221,13 +223,13 @@ export default function TripsPage() {
               placeholder="Destination"
               value={formData.destination}
               onChange={(e) => setFormData({ ...formData, destination: e.target.value })}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               required
             />
             <select
               value={formData.vehicleId}
               onChange={(e) => setFormData({ ...formData, vehicleId: e.target.value })}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               required
             >
               <option value="">Select Vehicle</option>
@@ -240,7 +242,7 @@ export default function TripsPage() {
             <select
               value={formData.driverId}
               onChange={(e) => setFormData({ ...formData, driverId: e.target.value })}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               required
             >
               <option value="">Select Driver</option>
@@ -255,7 +257,7 @@ export default function TripsPage() {
               placeholder="Cargo Weight (kg)"
               value={formData.cargoWeight}
               onChange={(e) => setFormData({ ...formData, cargoWeight: e.target.value })}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               required
             />
             <input
@@ -263,15 +265,15 @@ export default function TripsPage() {
               placeholder="Planned Distance (km)"
               value={formData.plannedDistance}
               onChange={(e) => setFormData({ ...formData, plannedDistance: e.target.value })}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               required
             />
           </div>
-          <div className="flex gap-2">
-            <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+          <div className="flex gap-3 pt-2">
+            <button type="submit" className="bg-green-600 text-white px-6 py-2.5 rounded-full hover:bg-green-700 transition-all shadow-md font-medium">
               Save
             </button>
-            <button type="button" onClick={() => setShowForm(false)} className="bg-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-500">
+            <button type="button" onClick={() => setShowForm(false)} className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2.5 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition-all font-medium">
               Cancel
             </button>
           </div>
@@ -283,7 +285,7 @@ export default function TripsPage() {
         {["DRAFT", "DISPATCHED", "COMPLETED", "CANCELLED"].map((status) => (
           <button
             key={status}
-            className="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            className="px-5 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600 transition-all"
           >
             {status} ({counts[status as keyof typeof counts]})
           </button>
@@ -292,26 +294,23 @@ export default function TripsPage() {
 
       <div className="grid gap-4">
         {trips.map((trip) => (
-          <div key={trip.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border-l-4" style={{
-            borderLeftColor: ({
-              DRAFT: "#9ca3af",
-              DISPATCHED: "#3b82f6",
-              COMPLETED: "#10b981",
-              CANCELLED: "#ef4444",
-            } as Record<string, string>)[trip.status] || "#9ca3af"
-          }}>
+          <div key={trip.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-3 mb-2">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                     {trip.source} → {trip.destination}
                   </h3>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(trip.status)}`}>
+                  <Badge variant={
+                    trip.status === "COMPLETED" ? "success" :
+                    trip.status === "DISPATCHED" ? "info" :
+                    trip.status === "CANCELLED" ? "error" : "default"
+                  }>
                     {trip.status}
-                  </span>
+                  </Badge>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Vehicle: {trip.vehicle.name} | Driver: {trip.driver.name} | Cargo: {trip.cargoWeight}kg | Distance: {trip.plannedDistance}km
+                  <span className="font-medium">Vehicle:</span> {trip.vehicle.name} | <span className="font-medium">Driver:</span> {trip.driver.name} | <span className="font-medium">Cargo:</span> {trip.cargoWeight}kg | <span className="font-medium">Distance:</span> {trip.plannedDistance}km
                 </p>
               </div>
               <div className="flex gap-2">
@@ -319,13 +318,13 @@ export default function TripsPage() {
                   <>
                     <button
                       onClick={() => handleDispatch(trip.id)}
-                      className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                      className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-full text-sm hover:bg-blue-700 transition-all shadow-sm font-medium"
                     >
                       <Zap size={14} /> Dispatch
                     </button>
                     <button
                       onClick={() => handleCancel(trip.id)}
-                      className="flex items-center gap-1 bg-gray-400 text-white px-3 py-1 rounded text-sm hover:bg-gray-500"
+                      className="flex items-center gap-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-full text-sm hover:bg-gray-300 dark:hover:bg-gray-600 transition-all font-medium"
                     >
                       <X size={14} /> Cancel
                     </button>
@@ -342,7 +341,7 @@ export default function TripsPage() {
                         revenue: "0",
                       });
                     }}
-                    className="flex items-center gap-1 bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
+                    className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-full text-sm hover:bg-green-700 transition-all shadow-sm font-medium"
                   >
                     <CheckCircle size={14} /> Complete
                   </button>
