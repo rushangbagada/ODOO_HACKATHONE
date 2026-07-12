@@ -46,6 +46,9 @@ export async function GET(
         expenses: {
           orderBy: { date: "desc" },
         },
+        documents: {
+          orderBy: { createdAt: "desc" },
+        },
       },
     });
 

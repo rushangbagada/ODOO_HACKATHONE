@@ -73,6 +73,23 @@ export default function SignupPage() {
               {...register("password")}
               error={errors.password?.message}
             />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+              <select
+                {...register("role")}
+                defaultValue=""
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              >
+                <option value="" disabled>Select a role</option>
+                <option value="FLEET_MANAGER">Fleet Manager</option>
+                <option value="DRIVER">Driver</option>
+                <option value="SAFETY_OFFICER">Safety Officer</option>
+                <option value="FINANCIAL_ANALYST">Financial Analyst</option>
+              </select>
+              {errors.role?.message && (
+                <p className="text-sm text-red-600 mt-1">{errors.role.message as string}</p>
+              )}
+            </div>
           </div>
 
           <div>

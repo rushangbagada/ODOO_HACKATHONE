@@ -143,7 +143,7 @@ async function main() {
         maxLoadCapacity: 450,
         acquisitionCost: 23000,
         odometer: 7000,
-        status: "AVAILABLE",
+        status: "IN_SHOP",
         region: "Central",
       },
     }),
