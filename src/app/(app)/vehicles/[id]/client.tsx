@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Edit2, FileText, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, Edit2, FileText, Trash2, Plus, Zap, Wrench } from "lucide-react";
 
 export default function VehicleDetailClient({ vehicleId }: { vehicleId: string }) {
   const router = useRouter();
@@ -144,6 +144,44 @@ export default function VehicleDetailClient({ vehicleId }: { vehicleId: string }
           <div className="text-sm text-gray-500">View only</div>
         )}
       </div>
+
+      {/* Active Trip Banner */}
+      {vehicle.status === "ON_TRIP" && (
+        (() => {
+          const activeTrip = vehicle.trips?.find((t: any) => t.status === "DISPATCHED");
+          if (!activeTrip) return null;
+          return (
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg flex items-center gap-3">
+              <Zap className="text-blue-500" size={20} />
+              <div>
+                <p className="font-semibold text-blue-900 dark:text-blue-200">Active Dispatch</p>
+                <p className="text-sm text-blue-800 dark:text-blue-300">
+                  Currently on active trip <span className="font-semibold">{activeTrip.source} ➜ {activeTrip.destination}</span> driven by <span className="font-semibold">{activeTrip.driver?.name || "unassigned"}</span>.
+                </p>
+              </div>
+            </div>
+          );
+        })()
+      )}
+
+      {/* Active Maintenance Banner */}
+      {vehicle.status === "IN_SHOP" && (
+        (() => {
+          const activeMaint = vehicle.maintenanceLogs?.find((m: any) => m.status === "ACTIVE");
+          if (!activeMaint) return null;
+          return (
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-4 rounded-lg flex items-center gap-3">
+              <Wrench className="text-amber-500" size={20} />
+              <div>
+                <p className="font-semibold text-amber-900 dark:text-amber-200">Vehicle In Shop</p>
+                <p className="text-sm text-amber-800 dark:text-amber-300">
+                  Currently undergoing maintenance: <span className="font-semibold">{activeMaint.type}</span> ({activeMaint.description || "No description provided"}).
+                </p>
+              </div>
+            </div>
+          );
+        })()
+      )}
 
       {editing ? (
         <form onSubmit={handleUpdate} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">

@@ -20,7 +20,7 @@ interface TopbarProps {
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", resource: "dashboard" },
-  { label: "Vehicles", href: "/vehicles", resource: "vehicles" },
+  { label: "Vehicles", href: "/vehicles", resource: "vehicles", hideForRoles: ["FINANCIAL_ANALYST"] },
   { label: "Drivers", href: "/drivers", resource: "drivers" },
   { label: "Trips", href: "/trips", resource: "trips" },
   { label: "Maintenance", href: "/maintenance", resource: "maintenance" },
@@ -48,6 +48,7 @@ export function Topbar({ user }: TopbarProps) {
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
 
   const visibleNavItems = navItems.filter((item: any) => {
+    if (item.hideForRoles?.includes(user.role)) return false;
     if (item.roleOnly) {
       return user.role === item.roleOnly;
     }

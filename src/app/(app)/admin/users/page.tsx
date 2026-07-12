@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { CheckCircle, X, Clock } from "lucide-react";
@@ -11,21 +11,29 @@ export default function AdminUsersPage() {
   const [activeTab, setActiveTab] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
   const [rejectReason, setRejectReason] = useState<{ [key: string]: string }>({});
   const [showRejectForm, setShowRejectForm] = useState<{ [key: string]: boolean }>({});
+  const [counts, setCounts] = useState<{ PENDING: number; APPROVED: number; REJECTED: number }>({
+    PENDING: 0,
+    APPROVED: 0,
+    REJECTED: 0,
+  });
 
-  useEffect(() => {
-    fetchUsers();
-  }, [activeTab]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await axios.get(`/api/admin/users?status=${activeTab}`);
       setUsers(response.data.users);
+      if (response.data.counts) {
+        setCounts(response.data.counts);
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to load users");
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const handleApprove = async (userId: string) => {
     try {
@@ -86,7 +94,7 @@ export default function AdminUsersPage() {
                 : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900"
             }`}
           >
-            {tab} ({users.length})
+            {tab} ({counts[tab as keyof typeof counts] ?? 0})
           </button>
         ))}
       </div>

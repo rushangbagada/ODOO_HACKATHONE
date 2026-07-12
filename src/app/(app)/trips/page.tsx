@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { Plus, CheckCircle, Zap, X } from "lucide-react";
+import { can } from "@/lib/permissions";
 
 export default function TripsPage() {
   const [trips, setTrips] = useState<any[]>([]);
@@ -184,7 +185,10 @@ export default function TripsPage() {
 
   const counts = getTabs();
 
-  const canCreateTrips = user?.role === "FLEET_MANAGER" || user?.role === "DRIVER";
+  const canCreateTrips = can(user?.role, "trips.create");
+  const canDispatchTrips = can(user?.role, "trips.dispatch");
+  const canCompleteTrips = can(user?.role, "trips.complete");
+  const canCancelTrips = can(user?.role, "trips.cancel");
 
   return (
     <div className="space-y-6">
@@ -200,7 +204,7 @@ export default function TripsPage() {
           </button>
         ) : (
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            Only Fleet Managers and Drivers can create trips
+            You don't have permission to create trips
           </div>
         )}
       </div>
@@ -317,21 +321,25 @@ export default function TripsPage() {
               <div className="flex gap-2">
                 {trip.status === "DRAFT" && (
                   <>
-                    <button
-                      onClick={() => handleDispatch(trip.id)}
-                      className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
-                    >
-                      <Zap size={14} /> Dispatch
-                    </button>
-                    <button
-                      onClick={() => handleCancel(trip.id)}
-                      className="flex items-center gap-1 bg-gray-400 text-white px-3 py-1 rounded text-sm hover:bg-gray-500"
-                    >
-                      <X size={14} /> Cancel
-                    </button>
+                    {canDispatchTrips && (
+                      <button
+                        onClick={() => handleDispatch(trip.id)}
+                        className="flex items-center gap-1 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                      >
+                        <Zap size={14} /> Dispatch
+                      </button>
+                    )}
+                    {canCancelTrips && (
+                      <button
+                        onClick={() => handleCancel(trip.id)}
+                        className="flex items-center gap-1 bg-gray-400 text-white px-3 py-1 rounded text-sm hover:bg-gray-500"
+                      >
+                        <X size={14} /> Cancel
+                      </button>
+                    )}
                   </>
                 )}
-                {trip.status === "DISPATCHED" && (
+                {trip.status === "DISPATCHED" && canCompleteTrips && (
                   <button
                     onClick={() => {
                       setActiveCompletionTrip(trip);

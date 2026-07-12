@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
-import { getDashboardMetrics, getComplianceAlerts } from "@/lib/metrics";
+import { getDashboardMetrics, getComplianceAlerts, getPerVehicleReport } from "@/lib/metrics";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
@@ -13,6 +13,115 @@ export async function GET(request: NextRequest) {
 
     if (!canRead(user.role as any, "dashboard")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (user.role === "DRIVER") {
+      const driverRecord =
+        (await prisma.driver.findFirst({
+          where: { name: { equals: user.name, mode: "insensitive" } },
+        })) || (await prisma.driver.findFirst());
+
+      if (!driverRecord) {
+        return NextResponse.json({ role: "DRIVER", driver: null });
+      }
+
+      const [completedTripsCount, activeTrip, myTrips] = await Promise.all([
+        prisma.trip.count({
+          where: { driverId: driverRecord.id, status: "COMPLETED" },
+        }),
+        prisma.trip.findFirst({
+          where: { driverId: driverRecord.id, status: "DISPATCHED" },
+          include: { vehicle: true },
+        }),
+        prisma.trip.findMany({
+          where: { driverId: driverRecord.id },
+          include: { vehicle: true },
+          orderBy: { createdAt: "desc" },
+        }),
+      ]);
+
+      return NextResponse.json({
+        role: "DRIVER",
+        driver: driverRecord,
+        completedTripsCount,
+        activeTrip,
+        myTrips,
+      });
+    }
+
+    if (user.role === "FINANCIAL_ANALYST") {
+      const completedTrips = await prisma.trip.findMany({ where: { status: "COMPLETED" } });
+      const totalRevenue = completedTrips.reduce((sum, t) => sum + t.revenue, 0);
+
+      const [fuelLogs, maintenanceLogs, expenses] = await Promise.all([
+        prisma.fuelLog.findMany(),
+        prisma.maintenanceLog.findMany(),
+        prisma.expense.findMany(),
+      ]);
+
+      const totalFuelCost = fuelLogs.reduce((sum, f) => sum + f.cost, 0);
+      const totalMaintenanceCost = maintenanceLogs.reduce((sum, m) => sum + m.cost, 0);
+      const totalExpenseCost = expenses.reduce((sum, e) => sum + e.amount, 0);
+      const totalOperationalCost = totalFuelCost + totalMaintenanceCost + totalExpenseCost;
+
+      const costBreakdown = [
+        { name: "Fuel", value: totalFuelCost },
+        { name: "Maintenance", value: totalMaintenanceCost },
+        { name: "Tolls & Other", value: totalExpenseCost },
+      ];
+
+      // Revenue vs cost trend, last 14 days
+      const last14Days = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+      const [tripsInRange, fuelInRange, expensesInRange] = await Promise.all([
+        prisma.trip.findMany({
+          where: { status: "COMPLETED", completedAt: { gte: last14Days } },
+        }),
+        prisma.fuelLog.findMany({ where: { date: { gte: last14Days } } }),
+        prisma.expense.findMany({ where: { date: { gte: last14Days } } }),
+      ]);
+
+      const trendMap = new Map<string, { revenue: number; cost: number }>();
+      for (let i = 0; i < 14; i++) {
+        const date = new Date(Date.now() - (14 - i) * 24 * 60 * 60 * 1000);
+        trendMap.set(date.toISOString().split("T")[0], { revenue: 0, cost: 0 });
+      }
+      tripsInRange.forEach((t) => {
+        if (!t.completedAt) return;
+        const entry = trendMap.get(t.completedAt.toISOString().split("T")[0]);
+        if (entry) entry.revenue += t.revenue;
+      });
+      fuelInRange.forEach((f) => {
+        const entry = trendMap.get(f.date.toISOString().split("T")[0]);
+        if (entry) entry.cost += f.cost;
+      });
+      expensesInRange.forEach((e) => {
+        const entry = trendMap.get(e.date.toISOString().split("T")[0]);
+        if (entry) entry.cost += e.amount;
+      });
+      const revenueCostTrend = Array.from(trendMap.entries()).map(([date, v]) => ({
+        date,
+        revenue: v.revenue,
+        cost: v.cost,
+      }));
+
+      const perVehicle = await getPerVehicleReport();
+      const topVehiclesByCost = [...perVehicle]
+        .sort((a, b) => b.operationalCost - a.operationalCost)
+        .slice(0, 5);
+
+      return NextResponse.json({
+        role: "FINANCIAL_ANALYST",
+        totalRevenue,
+        totalFuelCost,
+        totalMaintenanceCost,
+        totalExpenseCost,
+        totalOperationalCost,
+        netMargin: totalRevenue - totalOperationalCost,
+        completedTripsCount: completedTrips.length,
+        costBreakdown,
+        revenueCostTrend,
+        topVehiclesByCost,
+      });
     }
 
     const searchParams = request.nextUrl.searchParams;

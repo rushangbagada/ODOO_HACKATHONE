@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Edit2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Edit2, AlertCircle, Zap } from "lucide-react";
 
 export default function DriverDetailClient({ driverId }: { driverId: string }) {
   const router = useRouter();
@@ -118,6 +118,25 @@ export default function DriverDetailClient({ driverId }: { driverId: string }) {
             </p>
           </div>
         </div>
+      )}
+
+      {/* Active Trip Banner */}
+      {driver.status === "ON_TRIP" && (
+        (() => {
+          const activeTrip = driver.trips?.find((t: any) => t.status === "DISPATCHED");
+          if (!activeTrip) return null;
+          return (
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-4 rounded-lg flex items-center gap-3">
+              <Zap className="text-blue-500" size={20} />
+              <div>
+                <p className="font-semibold text-blue-900 dark:text-blue-200">Active Dispatch</p>
+                <p className="text-sm text-blue-800 dark:text-blue-300">
+                  Currently on active trip <span className="font-semibold">{activeTrip.source} ➜ {activeTrip.destination}</span> driving vehicle <span className="font-semibold">{activeTrip.vehicle?.name} ({activeTrip.vehicle?.regNumber})</span>.
+                </p>
+              </div>
+            </div>
+          );
+        })()
       )}
 
       {editing ? (

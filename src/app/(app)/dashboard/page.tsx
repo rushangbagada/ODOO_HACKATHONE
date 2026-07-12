@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Truck, AlertCircle, TrendingUp, Clock, Mail } from "lucide-react";
+import { Truck, AlertCircle, TrendingUp, TrendingDown, Clock, Mail, ShieldCheck, CheckCircle, MapPin, Wallet, Fuel, Wrench, Receipt } from "lucide-react";
 import toast from "react-hot-toast";
 import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
@@ -75,9 +75,6 @@ export default function Dashboard() {
 
   if (!data) return <div>Error loading data</div>;
 
-  const { metrics, alerts, tripsByStatus, fleetComposition, utilizationTrend, filterOptions } = data;
-  const canSendReminders = user?.role === "FLEET_MANAGER" || user?.role === "SAFETY_OFFICER";
-
   // Custom tooltip to avoid rendering objects
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -108,6 +105,268 @@ export default function Dashboard() {
       </div>
     </div>
   );
+
+  if (data.role === "DRIVER") {
+    const { driver, completedTripsCount, activeTrip, myTrips } = data;
+
+    if (!driver) {
+      return (
+        <div className="text-center py-12 text-gray-600 dark:text-gray-400">
+          No driver profile found for your account. Contact your Fleet Manager.
+        </div>
+      );
+    }
+
+    const today = new Date();
+    const licenseExpiry = new Date(driver.licenseExpiryDate);
+    const daysToExpiry = Math.ceil((licenseExpiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const licenseStatus =
+      daysToExpiry < 0 ? "Expired" : daysToExpiry <= 30 ? "Expiring Soon" : "Valid";
+    const licenseColor =
+      daysToExpiry < 0 ? "#ef4444" : daysToExpiry <= 30 ? "#f59e0b" : "#10b981";
+
+    const statusColors: Record<string, string> = {
+      DRAFT: "bg-gray-100 text-gray-800",
+      DISPATCHED: "bg-blue-100 text-blue-800",
+      COMPLETED: "bg-green-100 text-green-800",
+      CANCELLED: "bg-red-100 text-red-800",
+    };
+
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Welcome, {driver.name}
+        </h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4" style={{ borderLeftColor: "#3b82f6" }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Completed Trips</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{completedTripsCount}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                <CheckCircle size={24} className="text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4" style={{ borderLeftColor: "#8b5cf6" }}>
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Safety Score</p>
+                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{driver.safetyScore}</p>
+              </div>
+              <div className="p-3 rounded-lg bg-purple-100 dark:bg-purple-900/30">
+                <ShieldCheck size={24} className="text-purple-600 dark:text-purple-400" />
+              </div>
+            </div>
+            <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${Math.max(0, Math.min(100, driver.safetyScore))}%`,
+                  backgroundColor: driver.safetyScore >= 80 ? "#10b981" : driver.safetyScore >= 60 ? "#f59e0b" : "#ef4444",
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4" style={{ borderLeftColor: licenseColor }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">License Status</p>
+                <p className="text-xl font-bold mt-1" style={{ color: licenseColor }}>{licenseStatus}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Expires: {licenseExpiry.toLocaleDateString()}
+                </p>
+              </div>
+              <div className="p-3 rounded-lg" style={{ backgroundColor: `${licenseColor}20` }}>
+                <AlertCircle size={24} style={{ color: licenseColor }} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {activeTrip ? (
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4" style={{ borderLeftColor: "#3b82f6" }}>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <MapPin size={20} className="text-blue-500" /> Active Trip
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Route</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {activeTrip.source} → {activeTrip.destination}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Vehicle</p>
+                <p className="font-medium text-gray-900 dark:text-white">{activeTrip.vehicle.name}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Cargo Weight</p>
+                <p className="font-medium text-gray-900 dark:text-white">{activeTrip.cargoWeight} kg</p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Planned Distance</p>
+                <p className="font-medium text-gray-900 dark:text-white">{activeTrip.plannedDistance} km</p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-gray-400">Dispatched</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {activeTrip.dispatchedAt ? new Date(activeTrip.dispatchedAt).toLocaleString() : "-"}
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center text-gray-500 dark:text-gray-400">
+            No active trip right now.
+          </div>
+        )}
+
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">My Trips</h3>
+          {myTrips.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No trips assigned yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                    <th className="py-2 pr-4">Route</th>
+                    <th className="py-2 pr-4">Vehicle</th>
+                    <th className="py-2 pr-4">Cargo</th>
+                    <th className="py-2 pr-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {myTrips.map((trip: any) => (
+                    <tr key={trip.id} className="border-b border-gray-100 dark:border-gray-700/50">
+                      <td className="py-2 pr-4 text-gray-900 dark:text-white">{trip.source} → {trip.destination}</td>
+                      <td className="py-2 pr-4 text-gray-700 dark:text-gray-300">{trip.vehicle.name}</td>
+                      <td className="py-2 pr-4 text-gray-700 dark:text-gray-300">{trip.cargoWeight} kg</td>
+                      <td className="py-2 pr-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusColors[trip.status] || "bg-gray-100 text-gray-800"}`}>
+                          {trip.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (data.role === "FINANCIAL_ANALYST") {
+    const {
+      totalRevenue,
+      totalFuelCost,
+      totalMaintenanceCost,
+      totalExpenseCost,
+      totalOperationalCost,
+      netMargin,
+      completedTripsCount,
+      costBreakdown,
+      revenueCostTrend,
+      topVehiclesByCost,
+    } = data;
+
+    const COST_COLORS = ["#3b82f6", "#f59e0b", "#ef4444"];
+
+    return (
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Financial Overview</h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KPICard label="Total Revenue" value={`₹${totalRevenue.toFixed(2)}`} icon={Wallet} color="#10b981" />
+          <KPICard label="Total Operational Cost" value={`₹${totalOperationalCost.toFixed(2)}`} icon={Receipt} color="#ef4444" />
+          <KPICard
+            label="Net Margin"
+            value={`₹${netMargin.toFixed(2)}`}
+            icon={netMargin >= 0 ? TrendingUp : TrendingDown}
+            color={netMargin >= 0 ? "#10b981" : "#ef4444"}
+          />
+          <KPICard label="Completed Trips" value={completedTripsCount} icon={CheckCircle} color="#3b82f6" />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <KPICard label="Fuel Cost" value={`₹${totalFuelCost.toFixed(2)}`} icon={Fuel} color="#f59e0b" />
+          <KPICard label="Maintenance Cost" value={`₹${totalMaintenanceCost.toFixed(2)}`} icon={Wrench} color="#8b5cf6" />
+          <KPICard label="Tolls & Other Expenses" value={`₹${totalExpenseCost.toFixed(2)}`} icon={Receipt} color="#ec4899" />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Cost Breakdown</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie data={costBreakdown} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                  {costBreakdown.map((_: any, index: number) => (
+                    <Cell key={index} fill={COST_COLORS[index % COST_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Revenue vs Cost (Last 14 Days)</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={revenueCostTrend}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+                <Line type="monotone" dataKey="revenue" stroke="#10b981" name="Revenue" />
+                <Line type="monotone" dataKey="cost" stroke="#ef4444" name="Cost" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Vehicles by Operational Cost</h3>
+          {topVehiclesByCost.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No vehicle cost data yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                    <th className="py-2 pr-4">Vehicle</th>
+                    <th className="py-2 pr-4">Revenue</th>
+                    <th className="py-2 pr-4">Operational Cost</th>
+                    <th className="py-2 pr-4">ROI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topVehiclesByCost.map((v: any) => (
+                    <tr key={v.vehicleId} className="border-b border-gray-100 dark:border-gray-700/50">
+                      <td className="py-2 pr-4 text-gray-900 dark:text-white">{v.name} ({v.regNumber})</td>
+                      <td className="py-2 pr-4 text-gray-700 dark:text-gray-300">₹{v.revenue.toFixed(2)}</td>
+                      <td className="py-2 pr-4 text-gray-700 dark:text-gray-300">₹{v.operationalCost.toFixed(2)}</td>
+                      <td className="py-2 pr-4 text-gray-700 dark:text-gray-300">{v.roi !== null ? v.roi : "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  const { metrics, alerts, tripsByStatus, fleetComposition, utilizationTrend, filterOptions } = data;
+  const canSendReminders = user?.role === "FLEET_MANAGER" || user?.role === "SAFETY_OFFICER";
 
   return (
     <div className="space-y-6">
