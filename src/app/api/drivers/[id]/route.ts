@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { canRead, canUpdate } from "@/lib/permissions";
 import { z } from "zod";
 
@@ -17,10 +17,11 @@ const updateDriverSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
+    const { id } = await params;
+    const user = await getAuthenticatedUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -30,7 +31,7 @@ export async function GET(
     }
 
     const driver = await prisma.driver.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         trips: {
           include: { vehicle: true },
@@ -52,10 +53,11 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
+    const { id } = await params;
+    const user = await getAuthenticatedUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -74,7 +76,7 @@ export async function PATCH(
     const validatedData = updateDriverSchema.parse(body);
 
     const driver = await prisma.driver.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!driver) {
@@ -87,7 +89,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.driver.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...validatedData,
         ...updateData,

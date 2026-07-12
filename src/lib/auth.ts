@@ -104,3 +104,11 @@ export async function checkRole(allowedRoles: string[]) {
   }
   return user;
 }
+
+export async function getAuthenticatedUser() {
+  try {
+    return await getCurrentUser();
+  } catch {
+    return null;
+  }
+}

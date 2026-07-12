@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, checkRole } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { canRead, canCreate } from "@/lib/permissions";
 import {
   validateUniqueRegNumber,
@@ -14,13 +14,13 @@ const createVehicleSchema = z.object({
   type: z.string().min(1, "Vehicle type required"),
   maxLoadCapacity: z.number().positive("Max load capacity must be positive"),
   acquisitionCost: z.number().positive("Acquisition cost must be positive"),
-  odometer: z.number().default(0).non_negative(),
+  odometer: z.number().nonnegative().default(0),
   region: z.string().optional(),
 });
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
+    const user = await getAuthenticatedUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser();
+    const user = await getAuthenticatedUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

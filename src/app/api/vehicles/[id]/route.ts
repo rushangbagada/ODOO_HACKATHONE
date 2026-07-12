@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { canRead, canUpdate } from "@/lib/permissions";
 import { validateVehicleNotOnTrip, ValidationError } from "@/lib/rules";
 import { z } from "zod";
@@ -10,17 +10,18 @@ const updateVehicleSchema = z.object({
   type: z.string().optional(),
   maxLoadCapacity: z.number().positive().optional(),
   acquisitionCost: z.number().positive().optional(),
-  odometer: z.number().non_negative().optional(),
+  odometer: z.number().nonnegative().optional(),
   region: z.string().optional(),
   status: z.enum(["AVAILABLE", "ON_TRIP", "IN_SHOP", "RETIRED"]).optional(),
 });
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
+    const { id } = await params;
+    const user = await getAuthenticatedUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -30,7 +31,7 @@ export async function GET(
     }
 
     const vehicle = await prisma.vehicle.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         trips: {
           include: { driver: true },
@@ -61,10 +62,11 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
+    const { id } = await params;
+    const user = await getAuthenticatedUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -77,7 +79,7 @@ export async function PATCH(
     const validatedData = updateVehicleSchema.parse(body);
 
     const vehicle = await prisma.vehicle.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!vehicle) {
@@ -87,14 +89,14 @@ export async function PATCH(
     // Validate retirement
     if (validatedData.status === "RETIRED") {
       try {
-        await validateVehicleNotOnTrip(params.id);
+        await validateVehicleNotOnTrip(id);
       } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 400 });
       }
     }
 
     const updated = await prisma.vehicle.update({
-      where: { id: params.id },
+      where: { id },
       data: validatedData,
     });
 
