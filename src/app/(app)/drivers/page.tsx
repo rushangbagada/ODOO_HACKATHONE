@@ -8,6 +8,7 @@ import { Plus, Eye } from "lucide-react";
 
 export default function DriversPage() {
   const [drivers, setDrivers] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -21,8 +22,18 @@ export default function DriversPage() {
   });
 
   useEffect(() => {
+    fetchUser();
     fetchDrivers();
   }, []);
+
+  const fetchUser = async () => {
+    try {
+      const response = await axios.get("/api/auth/verify-session");
+      setUser(response.data.user);
+    } catch (error) {
+      console.error("Failed to fetch user");
+    }
+  };
 
   const fetchDrivers = async () => {
     try {
@@ -82,17 +93,25 @@ export default function DriversPage() {
     return days;
   };
 
+  const canCreateDrivers = user?.role === "FLEET_MANAGER";
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Drivers</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-        >
-          <Plus size={20} />
-          New Driver
-        </button>
+        {canCreateDrivers ? (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <Plus size={20} />
+            New Driver
+          </button>
+        ) : (
+          <div className="text-sm text-gray-500 dark:text-gray-400">
+            Only Fleet Managers can create drivers
+          </div>
+        )}
       </div>
 
       {showForm && (
