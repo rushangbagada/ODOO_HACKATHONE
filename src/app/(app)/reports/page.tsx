@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Download, Printer, Shield, User, FileText, AlertTriangle } from "lucide-react";
+import { Download, Printer, Shield, FileText, AlertTriangle } from "lucide-react";
 import { LoadingPage } from "@/components/ui/loading";
 
 export default function ReportsPage() {
@@ -66,106 +66,13 @@ export default function ReportsPage() {
 
   if (loading) return <LoadingPage />;
 
-  // Render Driver View
-  if (summary.role === "DRIVER") {
-    const driverTrips: any[] = summary.trips || [];
-    
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Performance Reports</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1">
-              <User size={16} className="text-indigo-500" />
-              Logged in as Driver: <span className="font-semibold">{summary.driverName || "Driver"}</span>
-            </p>
-          </div>
-          <button
-            onClick={() => window.print()}
-            className="no-print flex items-center gap-2 bg-gray-700 dark:bg-gray-600 text-white px-5 py-2.5 rounded-full hover:bg-gray-800 dark:hover:bg-gray-700 text-sm transition-all shadow-md font-medium"
-          >
-            <Printer size={16} /> Print Report
-          </button>
-        </div>
-
-        {/* Driver Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">My Completed Trips</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">
-              {summary.completedTrips || 0}
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Total Distance Driven</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">
-              {summary.totalDistance || 0} km
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Fuel Consumed</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">
-              {summary.totalFuelLiters || 0} L
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Average Efficiency</p>
-            <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-              {summary.fuelEfficiency ? `${summary.fuelEfficiency} km/L` : "—"}
-            </p>
-          </div>
-        </div>
-
-        {/* Completed Trips Table */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">My Completed Trips History</h2>
-          {driverTrips.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-100 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Date</th>
-                    <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Vehicle</th>
-                    <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Route</th>
-                    <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Distance</th>
-                    <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Fuel Consumed</th>
-                    <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Efficiency</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {driverTrips.map((t) => {
-                    const efficiency = t.fuelConsumed > 0 ? Math.round((t.distance / t.fuelConsumed) * 100) / 100 : null;
-                    return (
-                      <tr key={t.id} className="border-t border-gray-200 dark:border-gray-700">
-                        <td className="px-4 py-2">{new Date(t.completedAt).toLocaleDateString()}</td>
-                        <td className="px-4 py-2">{t.vehicleName} ({t.vehicleReg})</td>
-                        <td className="px-4 py-2">{t.source} ➜ {t.destination}</td>
-                        <td className="px-4 py-2">{t.distance} km</td>
-                        <td className="px-4 py-2">{t.fuelConsumed} L</td>
-                        <td className="px-4 py-2 font-semibold text-green-600 dark:text-green-400">
-                          {efficiency ? `${efficiency} km/L` : "—"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No completed trips recorded yet.</p>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   // Render Safety Officer View
   if (summary.role === "SAFETY_OFFICER") {
     const driversList: any[] = summary.drivers || [];
-    const maintenanceList: any[] = summary.activeMaintenanceLogs || [];
-    const averageScore = driversList.length > 0 
+    const averageScore = driversList.length > 0
       ? Math.round(driversList.reduce((sum, d) => sum + d.safetyScore, 0) / driversList.length)
       : 100;
+    const suspendedCount = driversList.filter((d) => d.status === "SUSPENDED").length;
 
     return (
       <div className="space-y-6">
@@ -206,9 +113,9 @@ export default function ReportsPage() {
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Active Maintenance Logs</p>
-            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-              {summary.activeMaintenanceCount || 0}
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Suspended Drivers</p>
+            <p className={`text-3xl font-bold ${suspendedCount > 0 ? "text-red-600" : "text-gray-900 dark:text-white"}`}>
+              {suspendedCount}
             </p>
           </div>
         </div>
@@ -268,43 +175,11 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* Active Maintenance Logs */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Active Vehicle Maintenance Logs</h2>
-          {maintenanceList.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-gray-100 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Vehicle</th>
-                    <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Type</th>
-                    <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Description</th>
-                    <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Start Date</th>
-                    <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Est. Cost</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {maintenanceList.map((log) => (
-                    <tr key={log.id} className="border-t border-gray-200 dark:border-gray-700">
-                      <td className="px-4 py-2 font-medium">{log.vehicle?.name} ({log.vehicle?.regNumber})</td>
-                      <td className="px-4 py-2">{log.type}</td>
-                      <td className="px-4 py-2 text-gray-600 dark:text-gray-400">{log.description || "—"}</td>
-                      <td className="px-4 py-2">{new Date(log.startDate).toLocaleDateString()}</td>
-                      <td className="px-4 py-2">₹{log.cost.toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No vehicles are currently in maintenance.</p>
-          )}
-        </div>
       </div>
     );
   }
 
-  // Render Fleet Manager and Financial Analyst View
+  // Render Fleet Manager, Driver, and Financial Analyst View
   const perVehicle: any[] = summary.perVehicle || [];
 
   const handleExportVehicles = () => {
@@ -376,7 +251,7 @@ export default function ReportsPage() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Reports & Analytics</h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1">
             <FileText size={16} className="text-blue-500" />
-            Logged in as {summary.role === "FINANCIAL_ANALYST" ? "Financial Analyst" : "Fleet Manager"} (Full Fleet Analytics)
+            Logged in as {summary.role === "FINANCIAL_ANALYST" ? "Financial Analyst" : summary.role === "DRIVER" ? "Driver" : "Fleet Manager"} (Full Fleet Analytics)
           </p>
         </div>
         <button

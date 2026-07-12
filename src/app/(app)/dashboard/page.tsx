@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Truck, AlertCircle, TrendingUp, TrendingDown, Clock, Mail, ShieldCheck, CheckCircle, MapPin, Wallet, Fuel, Wrench, Receipt } from "lucide-react";
+import { Truck, AlertCircle, TrendingUp, TrendingDown, Clock, Mail, CheckCircle, Wallet, Fuel, Wrench, Receipt, Users, ShieldCheck, Ban } from "lucide-react";
 import toast from "react-hot-toast";
 import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { LoadingPage } from "@/components/ui/loading";
-import { Badge } from "@/components/ui/badge";
 
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
@@ -100,153 +99,6 @@ export default function Dashboard() {
       </div>
     </div>
   );
-
-  if (data.role === "DRIVER") {
-    const { driver, completedTripsCount, activeTrip, myTrips } = data;
-
-    if (!driver) {
-      return (
-        <div className="text-center py-12 text-gray-600 dark:text-gray-400">
-          No driver profile found for your account. Contact your Fleet Manager.
-        </div>
-      );
-    }
-
-    const today = new Date();
-    const licenseExpiry = new Date(driver.licenseExpiryDate);
-    const daysToExpiry = Math.ceil((licenseExpiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    const licenseStatus =
-      daysToExpiry < 0 ? "Expired" : daysToExpiry <= 30 ? "Expiring Soon" : "Valid";
-    const licenseColor =
-      daysToExpiry < 0 ? "#ef4444" : daysToExpiry <= 30 ? "#f59e0b" : "#10b981";
-
-    const statusVariant: Record<string, "default" | "info" | "success" | "error"> = {
-      DRAFT: "default",
-      DISPATCHED: "info",
-      COMPLETED: "success",
-      CANCELLED: "error",
-    };
-
-    return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Welcome, {driver.name}
-        </h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <KPICard label="Completed Trips" value={completedTripsCount} icon={CheckCircle} color="#3b82f6" />
-
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Safety Score</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">{driver.safetyScore}</p>
-              </div>
-              <div className="p-3 rounded-xl" style={{ backgroundColor: "#8b5cf615" }}>
-                <ShieldCheck size={28} style={{ color: "#8b5cf6" }} strokeWidth={2} />
-              </div>
-            </div>
-            <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${Math.max(0, Math.min(100, driver.safetyScore))}%`,
-                  backgroundColor: driver.safetyScore >= 80 ? "#10b981" : driver.safetyScore >= 60 ? "#f59e0b" : "#ef4444",
-                }}
-              />
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-300">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">License Status</p>
-                <p className="text-xl font-bold mt-2" style={{ color: licenseColor }}>{licenseStatus}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Expires: {licenseExpiry.toLocaleDateString()}
-                </p>
-              </div>
-              <div className="p-3 rounded-xl" style={{ backgroundColor: `${licenseColor}15` }}>
-                <AlertCircle size={28} style={{ color: licenseColor }} strokeWidth={2} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {activeTrip ? (
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <MapPin size={20} className="text-blue-500" /> Active Trip
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-gray-500 dark:text-gray-400">Route</p>
-                <p className="font-medium text-gray-900 dark:text-white">
-                  {activeTrip.source} → {activeTrip.destination}
-                </p>
-              </div>
-              <div>
-                <p className="text-gray-500 dark:text-gray-400">Vehicle</p>
-                <p className="font-medium text-gray-900 dark:text-white">{activeTrip.vehicle.name}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 dark:text-gray-400">Cargo Weight</p>
-                <p className="font-medium text-gray-900 dark:text-white">{activeTrip.cargoWeight} kg</p>
-              </div>
-              <div>
-                <p className="text-gray-500 dark:text-gray-400">Planned Distance</p>
-                <p className="font-medium text-gray-900 dark:text-white">{activeTrip.plannedDistance} km</p>
-              </div>
-              <div>
-                <p className="text-gray-500 dark:text-gray-400">Dispatched</p>
-                <p className="font-medium text-gray-900 dark:text-white">
-                  {activeTrip.dispatchedAt ? new Date(activeTrip.dispatchedAt).toLocaleString() : "-"}
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 text-center text-gray-500 dark:text-gray-400">
-            No active trip right now.
-          </div>
-        )}
-
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">My Trips</h3>
-          {myTrips.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No trips assigned yet.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-                    <th className="py-2 pr-4">Route</th>
-                    <th className="py-2 pr-4">Vehicle</th>
-                    <th className="py-2 pr-4">Cargo</th>
-                    <th className="py-2 pr-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {myTrips.map((trip: any) => (
-                    <tr key={trip.id} className="border-b border-gray-100 dark:border-gray-700/50">
-                      <td className="py-2 pr-4 text-gray-900 dark:text-white">{trip.source} → {trip.destination}</td>
-                      <td className="py-2 pr-4 text-gray-700 dark:text-gray-300">{trip.vehicle.name}</td>
-                      <td className="py-2 pr-4 text-gray-700 dark:text-gray-300">{trip.cargoWeight} kg</td>
-                      <td className="py-2 pr-4">
-                        <Badge variant={statusVariant[trip.status] || "default"} size="sm">
-                          {trip.status}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
 
   if (data.role === "FINANCIAL_ANALYST") {
     const {
@@ -350,8 +202,126 @@ export default function Dashboard() {
     );
   }
 
+  if (data.role === "SAFETY_OFFICER") {
+    const {
+      totalDrivers,
+      averageSafetyScore,
+      suspendedCount,
+      expiredCount,
+      expiringSoonCount,
+      expiredLicenses,
+      expiringSoon,
+      safetyDistribution,
+      atRiskDrivers,
+    } = data;
+
+    const DIST_COLORS = ["#10b981", "#f59e0b", "#ef4444"];
+
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Safety & Compliance Overview</h1>
+          {(expiredCount > 0 || expiringSoonCount > 0) && (
+            <button
+              onClick={handleSendReminders}
+              disabled={sendingReminders}
+              className="flex items-center gap-2 text-sm bg-indigo-600 text-white px-4 py-2 rounded-full hover:bg-indigo-700 disabled:opacity-50 transition-all duration-200 font-medium"
+            >
+              <Mail size={14} /> {sendingReminders ? "Sending..." : "Email License Reminders"}
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KPICard label="Total Drivers" value={totalDrivers} icon={Users} color="#3b82f6" />
+          <KPICard label="Average Safety Score" value={`${averageSafetyScore}/100`} icon={ShieldCheck} color="#8b5cf6" />
+          <KPICard label="Suspended Drivers" value={suspendedCount} icon={Ban} color="#ef4444" />
+          <KPICard label="Expired Licenses" value={expiredCount} icon={AlertCircle} color="#f59e0b" />
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Safety Score Distribution</h3>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={safetyDistribution}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="label" stroke="#6b7280" />
+              <YAxis allowDecimals={false} stroke="#6b7280" />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+                {safetyDistribution.map((_: any, index: number) => (
+                  <Cell key={index} fill={DIST_COLORS[index % DIST_COLORS.length]} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {(expiredLicenses.length > 0 || expiringSoon.length > 0) && (
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <AlertCircle size={20} className="text-red-500" />
+              License Compliance Alerts
+            </h3>
+            <div className="space-y-4">
+              {expiredLicenses.length > 0 && (
+                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-200 dark:border-red-800">
+                  <p className="text-sm font-semibold text-red-900 dark:text-red-200 mb-2">Expired Licenses ({expiredLicenses.length})</p>
+                  <ul className="text-sm text-red-800 dark:text-red-300 space-y-1">
+                    {expiredLicenses.slice(0, 5).map((driver: any) => (
+                      <li key={driver.id}>• {driver.name} (Expired: {new Date(driver.licenseExpiryDate).toLocaleDateString()})</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {expiringSoon.length > 0 && (
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-200 dark:border-yellow-800">
+                  <p className="text-sm font-semibold text-yellow-900 dark:text-yellow-200 mb-2">Licenses Expiring Soon ({expiringSoon.length})</p>
+                  <ul className="text-sm text-yellow-800 dark:text-yellow-300 space-y-1">
+                    {expiringSoon.slice(0, 5).map((driver: any) => (
+                      <li key={driver.id}>• {driver.name} (Expires: {new Date(driver.licenseExpiryDate).toLocaleDateString()})</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">At-Risk Drivers (Safety Score &lt; 60)</h3>
+          {atRiskDrivers.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No drivers currently below the safety threshold.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                    <th className="py-2 pr-4">Driver</th>
+                    <th className="py-2 pr-4">Safety Score</th>
+                    <th className="py-2 pr-4">Status</th>
+                    <th className="py-2 pr-4">License Expiry</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {atRiskDrivers.map((d: any) => (
+                    <tr key={d.id} className="border-b border-gray-100 dark:border-gray-700/50">
+                      <td className="py-2 pr-4 text-gray-900 dark:text-white">{d.name}</td>
+                      <td className="py-2 pr-4 font-semibold text-red-600 dark:text-red-400">{d.safetyScore}/100</td>
+                      <td className="py-2 pr-4 text-gray-700 dark:text-gray-300">{d.status}</td>
+                      <td className="py-2 pr-4 text-gray-700 dark:text-gray-300">{new Date(d.licenseExpiryDate).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const { metrics, alerts, tripsByStatus, fleetComposition, utilizationTrend, filterOptions } = data;
-  const canSendReminders = user?.role === "FLEET_MANAGER" || user?.role === "SAFETY_OFFICER";
+  const canSendReminders = user?.role === "FLEET_MANAGER";
 
   return (
     <div className="space-y-6">

@@ -15,40 +15,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (user.role === "DRIVER") {
-      const driverRecord =
-        (await prisma.driver.findFirst({
-          where: { name: { equals: user.name, mode: "insensitive" } },
-        })) || (await prisma.driver.findFirst());
-
-      if (!driverRecord) {
-        return NextResponse.json({ role: "DRIVER", driver: null });
-      }
-
-      const [completedTripsCount, activeTrip, myTrips] = await Promise.all([
-        prisma.trip.count({
-          where: { driverId: driverRecord.id, status: "COMPLETED" },
-        }),
-        prisma.trip.findFirst({
-          where: { driverId: driverRecord.id, status: "DISPATCHED" },
-          include: { vehicle: true },
-        }),
-        prisma.trip.findMany({
-          where: { driverId: driverRecord.id },
-          include: { vehicle: true },
-          orderBy: { createdAt: "desc" },
-        }),
-      ]);
-
-      return NextResponse.json({
-        role: "DRIVER",
-        driver: driverRecord,
-        completedTripsCount,
-        activeTrip,
-        myTrips,
-      });
-    }
-
     if (user.role === "FINANCIAL_ANALYST") {
       const completedTrips = await prisma.trip.findMany({ where: { status: "COMPLETED" } });
       const totalRevenue = completedTrips.reduce((sum, t) => sum + t.revenue, 0);
@@ -121,6 +87,48 @@ export async function GET(request: NextRequest) {
         costBreakdown,
         revenueCostTrend,
         topVehiclesByCost,
+      });
+    }
+
+    if (user.role === "SAFETY_OFFICER") {
+      const today = new Date();
+      const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      const [allDrivers, expiringSoon, expiredLicenses, suspendedCount] = await Promise.all([
+        prisma.driver.findMany({ orderBy: { safetyScore: "asc" } }),
+        prisma.driver.findMany({
+          where: { licenseExpiryDate: { gte: today, lte: thirtyDaysFromNow } },
+          orderBy: { licenseExpiryDate: "asc" },
+        }),
+        prisma.driver.findMany({
+          where: { licenseExpiryDate: { lt: today } },
+          orderBy: { licenseExpiryDate: "asc" },
+        }),
+        prisma.driver.count({ where: { status: "SUSPENDED" } }),
+      ]);
+
+      const averageSafetyScore =
+        allDrivers.length > 0
+          ? Math.round(allDrivers.reduce((sum, d) => sum + d.safetyScore, 0) / allDrivers.length)
+          : 0;
+
+      const safetyDistribution = [
+        { label: "Excellent (80-100)", count: allDrivers.filter((d) => d.safetyScore >= 80).length },
+        { label: "Good (60-79)", count: allDrivers.filter((d) => d.safetyScore >= 60 && d.safetyScore < 80).length },
+        { label: "At Risk (<60)", count: allDrivers.filter((d) => d.safetyScore < 60).length },
+      ];
+
+      return NextResponse.json({
+        role: "SAFETY_OFFICER",
+        totalDrivers: allDrivers.length,
+        averageSafetyScore,
+        suspendedCount,
+        expiredCount: expiredLicenses.length,
+        expiringSoonCount: expiringSoon.length,
+        expiredLicenses,
+        expiringSoon,
+        safetyDistribution,
+        atRiskDrivers: allDrivers.filter((d) => d.safetyScore < 60),
       });
     }
 

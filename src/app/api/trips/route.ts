@@ -38,14 +38,6 @@ export async function GET(request: NextRequest) {
     const where: any = {};
     if (status) where.status = status;
 
-    if (user.role === "DRIVER") {
-      const driverRecord =
-        (await prisma.driver.findFirst({
-          where: { name: { equals: user.name, mode: "insensitive" } },
-        })) || (await prisma.driver.findFirst());
-      where.driverId = driverRecord?.id ?? "__none__";
-    }
-
     const trips = await prisma.trip.findMany({
       where,
       orderBy: { [sort]: order },
