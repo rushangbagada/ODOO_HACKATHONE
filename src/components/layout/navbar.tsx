@@ -70,16 +70,16 @@ export const Navbar = () => {
                   Dashboard
                 </Link>
               )}
-              {user?.role === "ADMIN" && (
+              {user?.role === "FLEET_MANAGER" && (
                 <Link
-                  href="/admin"
+                  href="/admin/users"
                   className={`inline-flex items-center px-1 pt-1 text-sm font-medium border-b-2 transition-colors ${
-                    pathname === "/admin"
+                    pathname === "/admin/users"
                       ? "text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-400"
                       : "text-zinc-500 dark:text-zinc-400 border-transparent hover:text-zinc-900 dark:hover:text-zinc-100 hover:border-zinc-300 dark:hover:border-zinc-750"
                   }`}
                 >
-                  Admin
+                  User Approval
                 </Link>
               )}
             </div>

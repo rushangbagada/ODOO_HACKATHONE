@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protect admin routes
-  if (isAdminRoute && user?.role !== "ADMIN") {
+  if (isAdminRoute && user?.role !== "FLEET_MANAGER") {
     return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 
