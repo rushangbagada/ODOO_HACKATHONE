@@ -48,12 +48,21 @@ enum ExpenseType {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role
-  createdAt DateTime @default(now())
+  id                  String               @id @default(cuid())
+  name                String
+  email               String               @unique
+  password            String
+  role                Role
+  createdAt           DateTime             @default(now())
+  passwordResetToken  PasswordResetToken?
+}
+
+model PasswordResetToken {
+  id      String   @id @default(cuid())
+  userId  String   @unique
+  token   String   @unique
+  expires DateTime
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Vehicle {
@@ -72,6 +81,16 @@ model Vehicle {
   maintenanceLogs MaintenanceLog[]
   fuelLogs        FuelLog[]
   expenses        Expense[]
+  documents       VehicleDocument[]
+}
+
+model VehicleDocument {
+  id        String   @id @default(cuid())
+  vehicleId String
+  name      String
+  url       String
+  createdAt DateTime @default(now())
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 }
 
 model Driver {

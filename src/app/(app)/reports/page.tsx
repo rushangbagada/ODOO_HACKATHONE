@@ -3,19 +3,15 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Download } from "lucide-react";
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { Download, Printer } from "lucide-react";
 
 export default function ReportsPage() {
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [vehicles, setVehicles] = useState<any[]>([]);
-  const [trips, setTrips] = useState<any[]>([]);
 
   useEffect(() => {
     fetchReportData();
-    fetchVehicles();
-    fetchTrips();
   }, []);
 
   const fetchReportData = async () => {
@@ -29,29 +25,9 @@ export default function ReportsPage() {
     }
   };
 
-  const fetchVehicles = async () => {
-    try {
-      const response = await axios.get("/api/vehicles");
-      setVehicles(response.data.vehicles || []);
-    } catch (error: any) {
-      console.error("Failed to load vehicles:", error);
-      toast.error(error.response?.data?.error || "Failed to load vehicles for export");
-    }
-  };
-
-  const fetchTrips = async () => {
-    try {
-      const response = await axios.get("/api/trips");
-      setTrips(response.data.trips || []);
-    } catch (error: any) {
-      console.error("Failed to load trips:", error);
-      toast.error(error.response?.data?.error || "Failed to load trips for export");
-    }
-  };
-
   const downloadCSV = (data: any[], filename: string) => {
     if (!data || data.length === 0) {
-      toast.error("No data available to export. Please ensure data has been loaded.");
+      toast.error("No data available to export.");
       return;
     }
 
@@ -74,7 +50,7 @@ export default function ReportsPage() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${filename}-${new Date().toISOString().split('T')[0]}.csv`;
+      link.download = `${filename}-${new Date().toISOString().split("T")[0]}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -86,71 +62,58 @@ export default function ReportsPage() {
     }
   };
 
+  const perVehicle: any[] = summary?.perVehicle || [];
+
   const handleExportVehicles = () => {
-    const data = vehicles.map((v) => ({
-      "Reg Number": v.regNumber,
-      Name: v.name,
-      Type: v.type,
-      "Max Capacity": v.maxLoadCapacity,
-      "Acquisition Cost": v.acquisitionCost,
-      Odometer: v.odometer,
-      Status: v.status,
-      Region: v.region,
-    }));
-    downloadCSV(data, "vehicles-summary");
+    downloadCSV(
+      perVehicle.map((v) => ({
+        "Reg Number": v.regNumber,
+        Name: v.name,
+        Type: v.type,
+        Status: v.status,
+        "Acquisition Cost": v.acquisitionCost,
+      })),
+      "vehicles-summary"
+    );
   };
 
   const handleExportFuelEfficiency = () => {
-    const fuelData = trips
-      .filter((t) => t.status === "COMPLETED")
-      .map((t) => ({
-        "Trip ID": t.id,
-        Vehicle: t.vehicle?.name || "N/A",
-        Distance: t.actualDistance || t.plannedDistance,
-        "Fuel Consumed": t.fuelConsumed,
-        "Efficiency (km/l)": t.actualDistance && t.fuelConsumed
-          ? (t.actualDistance / t.fuelConsumed).toFixed(2)
-          : "N/A",
-      }));
-    downloadCSV(fuelData, "fuel-efficiency");
+    downloadCSV(
+      perVehicle.map((v) => ({
+        Vehicle: `${v.name} (${v.regNumber})`,
+        "Completed Trips": v.completedTrips,
+        "Total Distance (km)": v.totalDistance,
+        "Total Fuel (L)": v.totalFuelLiters,
+        "Efficiency (km/l)": v.fuelEfficiency ?? "N/A",
+      })),
+      "fuel-efficiency"
+    );
   };
 
   const handleExportOperationalCost = () => {
-    const data = [
-      {
-        Category: "Total Revenue",
-        Amount: summary?.totalRevenue || 0,
-      },
-      {
-        Category: "Fuel Cost",
-        Amount: summary?.totalFuelCost || 0,
-      },
-      {
-        Category: "Maintenance Cost",
-        Amount: summary?.totalMaintenanceCost || 0,
-      },
-      {
-        Category: "Expense Cost",
-        Amount: summary?.totalExpenseCost || 0,
-      },
-      {
-        Category: "Total Operational Cost",
-        Amount: summary?.totalOperationalCost || 0,
-      },
-    ];
-    downloadCSV(data, "operational-cost");
+    downloadCSV(
+      perVehicle.map((v) => ({
+        Vehicle: `${v.name} (${v.regNumber})`,
+        "Fuel Cost": v.fuelCost,
+        "Maintenance Cost": v.maintenanceCost,
+        "Other Expenses": v.expenseCost,
+        "Total Operational Cost": v.operationalCost,
+      })),
+      "operational-cost"
+    );
   };
 
   const handleExportVehicleROI = () => {
-    const data = vehicles.map((v) => ({
-      "Vehicle": v.name,
-      "Acquisition Cost": v.acquisitionCost,
-      "Total Trips": trips.filter((t) => t.vehicleId === v.id).length,
-      "Total Revenue": trips
-        .filter((t) => t.vehicleId === v.id && t.status === "COMPLETED")
-        .reduce((sum, t) => sum + t.revenue, 0),
-    }));
-    downloadCSV(data, "vehicle-roi");
+    downloadCSV(
+      perVehicle.map((v) => ({
+        Vehicle: `${v.name} (${v.regNumber})`,
+        "Acquisition Cost": v.acquisitionCost,
+        Revenue: v.revenue,
+        "Fuel + Maintenance Cost": v.fuelCost + v.maintenanceCost,
+        ROI: v.roi ?? "N/A",
+      })),
+      "vehicle-roi"
+    );
   };
 
   if (loading) return <div className="text-center py-8">Loading...</div>;
@@ -163,12 +126,30 @@ export default function ReportsPage() {
     );
   }
 
+  const fuelEffData = perVehicle
+    .filter((v) => v.fuelEfficiency !== null)
+    .map((v) => ({ name: v.regNumber, value: v.fuelEfficiency }));
+
+  const costData = perVehicle.map((v) => ({ name: v.regNumber, value: v.operationalCost }));
+
+  const roiData = perVehicle
+    .filter((v) => v.roi !== null)
+    .map((v) => ({ name: v.regNumber, value: v.roi }));
+
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Reports & Analytics</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Reports & Analytics</h1>
+        <button
+          onClick={() => window.print()}
+          className="no-print flex items-center gap-2 bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-800 text-sm"
+        >
+          <Printer size={16} /> Print / Save as PDF
+        </button>
+      </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Total Completed Trips</p>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -187,24 +168,145 @@ export default function ReportsPage() {
             ₹{(summary.totalOperationalCost || 0).toFixed(2)}
           </p>
         </div>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Fleet Utilization</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">
+            {summary.fleetUtilization || 0}%
+          </p>
+        </div>
       </div>
 
-      {/* Placeholder for reports */}
+      {/* Fuel Efficiency */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Detailed Analytics</h2>
-        <p className="text-gray-600 dark:text-gray-400">
-          Reports data is being computed from your vehicles, drivers, trips, and operational logs.
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Fuel Efficiency (km/L)</h2>
+        {fuelEffData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={fuelEffData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value" fill="#3b82f6" />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">No fuel data recorded yet.</p>
+        )}
+        <div className="overflow-x-auto mt-4">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-100 dark:bg-gray-700">
+              <tr>
+                <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Vehicle</th>
+                <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Distance (km)</th>
+                <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Fuel (L)</th>
+                <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Efficiency (km/L)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {perVehicle.map((v) => (
+                <tr key={v.vehicleId} className="border-t border-gray-200 dark:border-gray-700">
+                  <td className="px-4 py-2">{v.name} ({v.regNumber})</td>
+                  <td className="px-4 py-2">{v.totalDistance}</td>
+                  <td className="px-4 py-2">{v.totalFuelLiters}</td>
+                  <td className="px-4 py-2">{v.fuelEfficiency ?? "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Operational Cost */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Operational Cost per Vehicle (₹)</h2>
+        <ResponsiveContainer width="100%" height={260}>
+          <BarChart data={costData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis />
+            <Tooltip />
+            <Bar dataKey="value" fill="#f59e0b" />
+          </BarChart>
+        </ResponsiveContainer>
+        <div className="overflow-x-auto mt-4">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-100 dark:bg-gray-700">
+              <tr>
+                <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Vehicle</th>
+                <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Fuel</th>
+                <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Maintenance</th>
+                <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Other Expenses</th>
+                <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {perVehicle.map((v) => (
+                <tr key={v.vehicleId} className="border-t border-gray-200 dark:border-gray-700">
+                  <td className="px-4 py-2">{v.name} ({v.regNumber})</td>
+                  <td className="px-4 py-2">₹{v.fuelCost.toFixed(2)}</td>
+                  <td className="px-4 py-2">₹{v.maintenanceCost.toFixed(2)}</td>
+                  <td className="px-4 py-2">₹{v.expenseCost.toFixed(2)}</td>
+                  <td className="px-4 py-2 font-semibold">₹{v.operationalCost.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Vehicle ROI */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Vehicle ROI</h2>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          ROI = (Revenue − (Maintenance + Fuel)) / Acquisition Cost
         </p>
-        <div className="mt-4 space-y-2 text-sm text-gray-600 dark:text-gray-400">
-          <p>✓ Fuel Efficiency metrics</p>
-          <p>✓ Fleet Utilization trends</p>
-          <p>✓ Operational Cost breakdown</p>
-          <p>✓ Vehicle ROI analysis</p>
+        {roiData.length > 0 ? (
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={roiData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="value">
+                {roiData.map((d, i) => (
+                  <Cell key={i} fill={d.value >= 0 ? "#10b981" : "#ef4444"} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">Not enough data to compute ROI yet.</p>
+        )}
+        <div className="overflow-x-auto mt-4">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-100 dark:bg-gray-700">
+              <tr>
+                <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Vehicle</th>
+                <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Revenue</th>
+                <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Fuel + Maintenance</th>
+                <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">Acquisition Cost</th>
+                <th className="px-4 py-2 text-left text-gray-700 dark:text-gray-300">ROI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {perVehicle.map((v) => (
+                <tr key={v.vehicleId} className="border-t border-gray-200 dark:border-gray-700">
+                  <td className="px-4 py-2">{v.name} ({v.regNumber})</td>
+                  <td className="px-4 py-2">₹{v.revenue.toFixed(2)}</td>
+                  <td className="px-4 py-2">₹{(v.fuelCost + v.maintenanceCost).toFixed(2)}</td>
+                  <td className="px-4 py-2">₹{v.acquisitionCost.toFixed(2)}</td>
+                  <td className={`px-4 py-2 font-semibold ${v.roi !== null && v.roi < 0 ? "text-red-600" : "text-green-600"}`}>
+                    {v.roi !== null ? `${(v.roi * 100).toFixed(1)}%` : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
       {/* Export Options */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+      <div className="no-print bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Export Data</h2>
         <div className="space-y-2">
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Export reports in CSV format for further analysis:</p>

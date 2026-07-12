@@ -62,9 +62,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const body = await request.json();
+
     // Safety Officer can only update status and safetyScore
     if (user.role === "SAFETY_OFFICER") {
-      const body = await request.json();
       if (Object.keys(body).some((key) => !["status", "safetyScore"].includes(key))) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
@@ -72,7 +73,6 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = await request.json();
     const validatedData = updateDriverSchema.parse(body);
 
     const driver = await prisma.driver.findUnique({

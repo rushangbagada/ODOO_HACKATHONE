@@ -1,9 +1,9 @@
 import { prisma } from "./prisma";
 
-export async function calculateFleetUtilization() {
+export async function calculateFleetUtilization(vehicleWhere: Record<string, any> = {}) {
   const [onTripVehicles, totalNonRetired] = await Promise.all([
-    prisma.vehicle.count({ where: { status: "ON_TRIP" } }),
-    prisma.vehicle.count({ where: { status: { not: "RETIRED" } } }),
+    prisma.vehicle.count({ where: { ...vehicleWhere, status: "ON_TRIP" } }),
+    prisma.vehicle.count({ where: { ...vehicleWhere, status: { not: "RETIRED" } } }),
   ]);
 
   if (totalNonRetired === 0) return 0;
@@ -60,16 +60,64 @@ export async function calculateVehicleROI(vehicleId: string) {
 
   const maintenanceCost = vehicle.maintenanceLogs.reduce((sum, m) => sum + m.cost, 0);
   const fuelCost = vehicle.fuelLogs.reduce((sum, f) => sum + f.cost, 0);
-  const expenseCost = vehicle.expenses.reduce((sum, e) => sum + e.amount, 0);
 
-  const totalCost = maintenanceCost + fuelCost + expenseCost;
-  const profit = totalRevenue - totalCost;
+  // ROI = (Revenue - (Maintenance + Fuel)) / Acquisition Cost, per spec.
+  const profit = totalRevenue - (maintenanceCost + fuelCost);
 
   if (vehicle.acquisitionCost === 0) return null;
   return Math.round((profit / vehicle.acquisitionCost) * 10000) / 10000;
 }
 
-export async function getDashboardMetrics() {
+export async function getPerVehicleReport() {
+  const vehicles = await prisma.vehicle.findMany({
+    include: {
+      trips: true,
+      maintenanceLogs: true,
+      fuelLogs: true,
+      expenses: true,
+    },
+    orderBy: { regNumber: "asc" },
+  });
+
+  return vehicles.map((vehicle) => {
+    const completedTrips = vehicle.trips.filter((t) => t.status === "COMPLETED");
+    const totalDistance = completedTrips.reduce((sum, t) => sum + (t.actualDistance || 0), 0);
+    const totalFuelLiters = vehicle.fuelLogs.reduce((sum, f) => sum + f.liters, 0);
+    const fuelCost = vehicle.fuelLogs.reduce((sum, f) => sum + f.cost, 0);
+    const maintenanceCost = vehicle.maintenanceLogs.reduce((sum, m) => sum + m.cost, 0);
+    const expenseCost = vehicle.expenses.reduce((sum, e) => sum + e.amount, 0);
+    const revenue = completedTrips.reduce((sum, t) => sum + t.revenue, 0);
+
+    const fuelEfficiency =
+      totalFuelLiters > 0 ? Math.round((totalDistance / totalFuelLiters) * 100) / 100 : null;
+    const operationalCost = fuelCost + maintenanceCost + expenseCost;
+    const roi =
+      vehicle.acquisitionCost > 0
+        ? Math.round(((revenue - (maintenanceCost + fuelCost)) / vehicle.acquisitionCost) * 10000) / 10000
+        : null;
+
+    return {
+      vehicleId: vehicle.id,
+      regNumber: vehicle.regNumber,
+      name: vehicle.name,
+      type: vehicle.type,
+      status: vehicle.status,
+      acquisitionCost: vehicle.acquisitionCost,
+      completedTrips: completedTrips.length,
+      totalDistance,
+      totalFuelLiters,
+      fuelEfficiency,
+      fuelCost,
+      maintenanceCost,
+      expenseCost,
+      operationalCost,
+      revenue,
+      roi,
+    };
+  });
+}
+
+export async function getDashboardMetrics(vehicleWhere: Record<string, any> = {}) {
   const [
     activeVehicles,
     availableVehicles,
@@ -78,15 +126,15 @@ export async function getDashboardMetrics() {
     pendingTrips,
     driversOnDuty,
   ] = await Promise.all([
-    prisma.vehicle.count({ where: { status: { not: "RETIRED" } } }),
-    prisma.vehicle.count({ where: { status: "AVAILABLE" } }),
-    prisma.vehicle.count({ where: { status: "IN_SHOP" } }),
+    prisma.vehicle.count({ where: { ...vehicleWhere, status: { not: "RETIRED" } } }),
+    prisma.vehicle.count({ where: { ...vehicleWhere, status: "AVAILABLE" } }),
+    prisma.vehicle.count({ where: { ...vehicleWhere, status: "IN_SHOP" } }),
     prisma.trip.count({ where: { status: "DISPATCHED" } }),
     prisma.trip.count({ where: { status: "DRAFT" } }),
     prisma.driver.count({ where: { status: "ON_TRIP" } }),
   ]);
 
-  const fleetUtilization = await calculateFleetUtilization();
+  const fleetUtilization = await calculateFleetUtilization(vehicleWhere);
 
   return {
     activeVehicles,

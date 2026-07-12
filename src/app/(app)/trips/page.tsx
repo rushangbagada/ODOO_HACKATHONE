@@ -251,12 +251,12 @@ export default function TripsPage() {
       <div className="grid gap-4">
         {trips.map((trip) => (
           <div key={trip.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border-l-4" style={{
-            borderLeftColor: {
+            borderLeftColor: ({
               DRAFT: "#9ca3af",
               DISPATCHED: "#3b82f6",
               COMPLETED: "#10b981",
               CANCELLED: "#ef4444",
-            }[trip.status] || "#9ca3af"
+            } as Record<string, string>)[trip.status] || "#9ca3af"
           }}>
             <div className="flex items-center justify-between">
               <div className="flex-1">

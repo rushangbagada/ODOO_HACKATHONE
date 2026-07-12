@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
@@ -9,16 +11,20 @@
   --foreground: #0f172a;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #09090b;
-    --foreground: #f4f4f5;
-  }
+.dark {
+  --background: #09090b;
+  --foreground: #f4f4f5;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
 }
 

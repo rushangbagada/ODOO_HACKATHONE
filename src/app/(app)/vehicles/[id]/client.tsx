@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Edit2 } from "lucide-react";
+import { ArrowLeft, Edit2, FileText, Trash2, Plus } from "lucide-react";
 
 export default function VehicleDetailClient({ vehicleId }: { vehicleId: string }) {
   const router = useRouter();
@@ -13,6 +13,8 @@ export default function VehicleDetailClient({ vehicleId }: { vehicleId: string }
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<any>({});
+  const [showDocForm, setShowDocForm] = useState(false);
+  const [docForm, setDocForm] = useState({ name: "", url: "" });
 
   useEffect(() => {
     fetchUser();
@@ -61,6 +63,30 @@ export default function VehicleDetailClient({ vehicleId }: { vehicleId: string }
     }
   };
 
+  const handleAddDocument = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await axios.post(`/api/vehicles/${vehicleId}/documents`, docForm);
+      toast.success("Document added");
+      setDocForm({ name: "", url: "" });
+      setShowDocForm(false);
+      fetchVehicle();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to add document");
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string) => {
+    if (!confirm("Remove this document?")) return;
+    try {
+      await axios.delete(`/api/vehicles/${vehicleId}/documents/${docId}`);
+      toast.success("Document removed");
+      fetchVehicle();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to remove document");
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading...</div>;
   }
@@ -68,6 +94,20 @@ export default function VehicleDetailClient({ vehicleId }: { vehicleId: string }
   if (!vehicle) {
     return <div className="text-center py-8 text-red-600">Vehicle not found</div>;
   }
+
+  const fuelCost = (vehicle.fuelLogs || []).reduce((sum: number, f: any) => sum + f.cost, 0);
+  const maintenanceCost = (vehicle.maintenanceLogs || []).reduce((sum: number, m: any) => sum + m.cost, 0);
+  const expenseCost = (vehicle.expenses || []).reduce((sum: number, e: any) => sum + e.amount, 0);
+  const operationalCost = fuelCost + maintenanceCost + expenseCost;
+  const revenue = (vehicle.trips || [])
+    .filter((t: any) => t.status === "COMPLETED")
+    .reduce((sum: number, t: any) => sum + t.revenue, 0);
+  const roi =
+    vehicle.acquisitionCost > 0
+      ? ((revenue - (maintenanceCost + fuelCost)) / vehicle.acquisitionCost) * 100
+      : null;
+
+  const canManageDocs = user?.role === "FLEET_MANAGER";
 
   const statusColors = {
     AVAILABLE: "bg-green-100 text-green-800",
@@ -258,6 +298,88 @@ export default function VehicleDetailClient({ vehicleId }: { vehicleId: string }
           </div>
         </div>
       )}
+
+      {/* Cost & ROI */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Operational Cost</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">₹{operationalCost.toFixed(2)}</p>
+          <p className="text-xs text-gray-400 mt-1">Fuel + Maintenance + Other Expenses</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Revenue (Completed Trips)</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">₹{revenue.toFixed(2)}</p>
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+          <p className="text-sm text-gray-600 dark:text-gray-400">ROI</p>
+          <p className={`text-2xl font-bold mt-1 ${roi !== null && roi < 0 ? "text-red-600" : "text-green-600"}`}>
+            {roi !== null ? `${roi.toFixed(1)}%` : "—"}
+          </p>
+        </div>
+      </div>
+
+      {/* Documents */}
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Documents</h2>
+          {canManageDocs && (
+            <button
+              onClick={() => setShowDocForm(!showDocForm)}
+              className="flex items-center gap-2 text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700"
+            >
+              <Plus size={14} /> Add Document
+            </button>
+          )}
+        </div>
+
+        {showDocForm && (
+          <form onSubmit={handleAddDocument} className="flex flex-col sm:flex-row gap-2 mb-4">
+            <input
+              type="text"
+              placeholder="Document name (e.g. Insurance, RC Book)"
+              value={docForm.name}
+              onChange={(e) => setDocForm({ ...docForm, name: e.target.value })}
+              className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-white"
+              required
+            />
+            <input
+              type="url"
+              placeholder="https://..."
+              value={docForm.url}
+              onChange={(e) => setDocForm({ ...docForm, url: e.target.value })}
+              className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-white"
+              required
+            />
+            <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm">
+              Save
+            </button>
+          </form>
+        )}
+
+        {vehicle.documents && vehicle.documents.length > 0 ? (
+          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+            {vehicle.documents.map((doc: any) => (
+              <li key={doc.id} className="flex items-center justify-between py-2">
+                <a
+                  href={doc.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+                >
+                  <FileText size={16} /> {doc.name}
+                </a>
+                {canManageDocs && (
+                  <button onClick={() => handleDeleteDocument(doc.id)} className="text-red-500 hover:text-red-700">
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-gray-500 dark:text-gray-400">No documents on file.</p>
+        )}
+      </div>
 
       {vehicle.trips && vehicle.trips.length > 0 && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">

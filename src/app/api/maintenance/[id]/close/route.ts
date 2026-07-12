@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getAuthenticatedUser } from "@/lib/auth";
-import { canUpdate } from "@/lib/permissions";
+import { can } from "@/lib/permissions";
 
 export async function POST(
   request: NextRequest,
@@ -14,7 +14,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!canUpdate(user.role as any, "maintenance")) {
+    if (!can(user.role as any, "maintenance.close")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

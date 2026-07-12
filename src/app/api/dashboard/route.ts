@@ -20,24 +20,41 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status");
     const region = searchParams.get("region");
 
+    // type/region narrow the vehicle pool behind every vehicle-based KPI card.
+    // status is handled separately below since the KPI cards are already status-bucketed.
+    const vehicleWhere: Record<string, any> = {};
+    if (type) vehicleWhere.type = type;
+    if (region) vehicleWhere.region = region;
+
     // Get KPI metrics
-    const metrics = await getDashboardMetrics();
+    const metrics = await getDashboardMetrics(vehicleWhere);
 
     // Get compliance alerts
     const alerts = await getComplianceAlerts();
 
     // Get trips by status
-    const tripsByStatus = await prisma.trip.groupBy({
+    const tripsByStatusRaw = await prisma.trip.groupBy({
       by: ["status"],
       _count: { id: true },
     });
+    const tripsByStatus = tripsByStatusRaw.map((row) => ({
+      status: row.status,
+      count: row._count.id,
+    }));
 
-    // Get fleet composition by type
-    const fleetComposition = await prisma.vehicle.groupBy({
+    // Get fleet composition by type (status filter, if set, narrows composition to that status)
+    const fleetCompositionRaw = await prisma.vehicle.groupBy({
       by: ["type"],
       _count: { id: true },
-      where: { status: { not: "RETIRED" } },
+      where: {
+        ...vehicleWhere,
+        status: status ? (status as any) : { not: "RETIRED" },
+      },
     });
+    const fleetComposition = fleetCompositionRaw.map((row) => ({
+      type: row.type,
+      count: row._count.id,
+    }));
 
     // Get utilization trend (last 14 days)
     const last14Days = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
@@ -70,12 +87,22 @@ export async function GET(request: NextRequest) {
       trips: count,
     }));
 
+    // Distinct filter options, computed from the full (unfiltered) vehicle set.
+    const allVehicles = await prisma.vehicle.findMany({
+      select: { type: true, region: true },
+    });
+    const filterOptions = {
+      types: Array.from(new Set(allVehicles.map((v) => v.type))).sort(),
+      regions: Array.from(new Set(allVehicles.map((v) => v.region).filter(Boolean))).sort() as string[],
+    };
+
     return NextResponse.json({
       metrics,
       alerts,
       tripsByStatus,
       fleetComposition,
       utilizationTrend,
+      filterOptions,
     });
   } catch (error) {
     console.error("Dashboard GET error:", error);

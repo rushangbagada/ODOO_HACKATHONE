@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth";
 import { canRead } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
+import { getPerVehicleReport, calculateFleetUtilization } from "@/lib/metrics";
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,6 +33,9 @@ export async function GET(request: NextRequest) {
 
     const totalOperationalCost = totalFuelCost + totalMaintenanceCost + totalExpenseCost;
 
+    const perVehicle = await getPerVehicleReport();
+    const fleetUtilization = await calculateFleetUtilization();
+
     return NextResponse.json({
       completedTrips: completedTrips.length,
       totalRevenue,
@@ -39,6 +43,8 @@ export async function GET(request: NextRequest) {
       totalFuelCost,
       totalMaintenanceCost,
       totalExpenseCost,
+      fleetUtilization,
+      perVehicle,
     });
   } catch (error) {
     console.error("Reports GET error:", error);

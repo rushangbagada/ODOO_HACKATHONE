@@ -26,7 +26,7 @@ export async function POST(request: Request) {
         name: validatedData.name,
         email: validatedData.email,
         password: hashedPassword,
-        role: "USER", // Default role
+        role: validatedData.role,
       },
     });
 

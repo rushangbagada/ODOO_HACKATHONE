@@ -118,7 +118,7 @@ export async function validateVehicleNotOnTrip(vehicleId: string) {
 export function getAvailableVehiclesQuery() {
   return {
     where: {
-      status: "AVAILABLE",
+      status: "AVAILABLE" as const,
     },
   };
 }
@@ -126,7 +126,7 @@ export function getAvailableVehiclesQuery() {
 export function getAvailableDriversQuery() {
   return {
     where: {
-      status: "AVAILABLE",
+      status: "AVAILABLE" as const,
       licenseExpiryDate: {
         gt: new Date(),
       },

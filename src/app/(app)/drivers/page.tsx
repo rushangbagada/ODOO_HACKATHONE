@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { Plus, Eye } from "lucide-react";
+import { Plus, Eye, ArrowUp, ArrowDown, Search } from "lucide-react";
 
 export default function DriversPage() {
   const [drivers, setDrivers] = useState<any[]>([]);
+  const [regions, setRegions] = useState<string[]>([]);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -21,10 +22,21 @@ export default function DriversPage() {
     region: "",
   });
 
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [regionFilter, setRegionFilter] = useState("");
+  const [sort, setSort] = useState("createdAt");
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
+
   useEffect(() => {
     fetchUser();
-    fetchDrivers();
+    fetchAllForFilterOptions();
   }, []);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => fetchDrivers(), 250);
+    return () => clearTimeout(timeout);
+  }, [search, statusFilter, regionFilter, sort, order]);
 
   const fetchUser = async () => {
     try {
@@ -35,14 +47,38 @@ export default function DriversPage() {
     }
   };
 
-  const fetchDrivers = async () => {
+  const fetchAllForFilterOptions = async () => {
     try {
       const response = await axios.get("/api/drivers");
+      const all = response.data.drivers as any[];
+      setRegions(Array.from(new Set(all.map((d) => d.region).filter(Boolean))).sort());
+    } catch (error) {
+      console.error("Failed to load filter options");
+    }
+  };
+
+  const fetchDrivers = async () => {
+    try {
+      const params: Record<string, string> = { sort, order };
+      if (search) params.search = search;
+      if (statusFilter) params.status = statusFilter;
+      if (regionFilter) params.region = regionFilter;
+
+      const response = await axios.get("/api/drivers", { params });
       setDrivers(response.data.drivers);
     } catch (error) {
       toast.error("Failed to load drivers");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleSort = (field: string) => {
+    if (sort === field) {
+      setOrder(order === "asc" ? "desc" : "asc");
+    } else {
+      setSort(field);
+      setOrder("asc");
     }
   };
 
@@ -65,12 +101,11 @@ export default function DriversPage() {
         region: "",
       });
       fetchDrivers();
+      fetchAllForFilterOptions();
     } catch (error: any) {
       toast.error(error.response?.data?.error || "Failed to create driver");
     }
   };
-
-  if (loading) return <div className="text-center py-8">Loading...</div>;
 
   const getStatusColor = (status: string) => {
     const colors: any = {
@@ -95,6 +130,20 @@ export default function DriversPage() {
 
   const canCreateDrivers = user?.role === "FLEET_MANAGER";
 
+  const SortHeader = ({ field, children }: { field: string; children: React.ReactNode }) => (
+    <th
+      onClick={() => toggleSort(field)}
+      className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white cursor-pointer select-none hover:bg-gray-100 dark:hover:bg-gray-600"
+    >
+      <span className="flex items-center gap-1">
+        {children}
+        {sort === field && (order === "asc" ? <ArrowUp size={14} /> : <ArrowDown size={14} />)}
+      </span>
+    </th>
+  );
+
+  if (loading) return <div className="text-center py-8">Loading...</div>;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -111,6 +160,49 @@ export default function DriversPage() {
           <div className="text-sm text-gray-500 dark:text-gray-400">
             Only Fleet Managers can create drivers
           </div>
+        )}
+      </div>
+
+      {/* Search & Filters */}
+      <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by name or license number..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        >
+          <option value="">All Statuses</option>
+          <option value="AVAILABLE">Available</option>
+          <option value="ON_TRIP">On Trip</option>
+          <option value="OFF_DUTY">Off Duty</option>
+          <option value="SUSPENDED">Suspended</option>
+        </select>
+        <select
+          value={regionFilter}
+          onChange={(e) => setRegionFilter(e.target.value)}
+          className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        >
+          <option value="">All Regions</option>
+          {regions.map((r) => (
+            <option key={r} value={r}>{r}</option>
+          ))}
+        </select>
+        {(search || statusFilter || regionFilter) && (
+          <button
+            onClick={() => { setSearch(""); setStatusFilter(""); setRegionFilter(""); }}
+            className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
+            Clear
+          </button>
         )}
       </div>
 
@@ -180,16 +272,23 @@ export default function DriversPage() {
         <table className="w-full">
           <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Name</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">License</th>
+              <SortHeader field="name">Name</SortHeader>
+              <SortHeader field="licenseNumber">License</SortHeader>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Category</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Expiry</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Safety Score</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Status</th>
+              <SortHeader field="licenseExpiryDate">Expiry</SortHeader>
+              <SortHeader field="safetyScore">Safety Score</SortHeader>
+              <SortHeader field="status">Status</SortHeader>
               <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {drivers.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                  No drivers match your filters.
+                </td>
+              </tr>
+            )}
             {drivers.map((driver) => (
               <tr key={driver.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                 <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{driver.name}</td>
