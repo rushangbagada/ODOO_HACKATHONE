@@ -5,6 +5,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { Plus } from "lucide-react";
 import { LoadingPage } from "@/components/ui/loading";
+import { can } from "@/lib/permissions";
 
 export default function FuelExpensesPage() {
   const [fuelLogs, setFuelLogs] = useState<any[]>([]);
@@ -44,20 +45,33 @@ export default function FuelExpensesPage() {
   };
 
   const fetchData = async () => {
-    try {
-      const [fuelRes, expenseRes, vehicleRes] = await Promise.all([
-        axios.get("/api/fuel-logs"),
-        axios.get("/api/expenses"),
-        axios.get("/api/vehicles"),
-      ]);
-      setFuelLogs(fuelRes.data.logs);
-      setExpenses(expenseRes.data.expenses);
-      setVehicles(vehicleRes.data.vehicles);
-    } catch (error) {
-      toast.error("Failed to load data");
-    } finally {
-      setLoading(false);
+    const [fuelRes, expenseRes, vehicleRes] = await Promise.allSettled([
+      axios.get("/api/fuel-logs"),
+      axios.get("/api/expenses"),
+      axios.get("/api/vehicles"),
+    ]);
+
+    // A 403 here means the role legitimately can't see that resource (e.g. Driver
+    // has fuel access but not expenses) — not an error worth surfacing to the user.
+    if (fuelRes.status === "fulfilled") {
+      setFuelLogs(fuelRes.value.data.logs);
+    } else if (fuelRes.reason?.response?.status !== 403) {
+      toast.error("Failed to load fuel logs");
     }
+
+    if (expenseRes.status === "fulfilled") {
+      setExpenses(expenseRes.value.data.expenses);
+    } else if (expenseRes.reason?.response?.status !== 403) {
+      toast.error("Failed to load expenses");
+    }
+
+    if (vehicleRes.status === "fulfilled") {
+      setVehicles(vehicleRes.value.data.vehicles);
+    } else if (vehicleRes.reason?.response?.status !== 403) {
+      toast.error("Failed to load vehicles");
+    }
+
+    setLoading(false);
   };
 
   const handleFuelSubmit = async (e: React.FormEvent) => {
@@ -97,6 +111,7 @@ export default function FuelExpensesPage() {
 
   const totalFuelCost = fuelLogs.reduce((sum, log) => sum + log.cost, 0);
   const totalExpenseCost = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const canViewExpenses = can(user?.role, "expenses.read");
 
   return (
     <div className="space-y-6">
@@ -114,16 +129,18 @@ export default function FuelExpensesPage() {
         >
           Fuel Logs ({fuelLogs.length})
         </button>
-        <button
-          onClick={() => setActiveTab("expenses")}
-          className={`px-5 py-3 font-semibold border-b-2 transition-all ${
-            activeTab === "expenses"
-              ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
-              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600"
-          }`}
-        >
-          Expenses ({expenses.length})
-        </button>
+        {canViewExpenses && (
+          <button
+            onClick={() => setActiveTab("expenses")}
+            className={`px-5 py-3 font-semibold border-b-2 transition-all ${
+              activeTab === "expenses"
+                ? "border-indigo-600 text-indigo-600 dark:text-indigo-400"
+                : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600"
+            }`}
+          >
+            Expenses ({expenses.length})
+          </button>
+        )}
       </div>
 
       {/* Fuel Logs Tab */}
@@ -134,7 +151,7 @@ export default function FuelExpensesPage() {
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Fuel Cost</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">₹{totalFuelCost.toFixed(2)}</p>
             </div>
-            {user?.role === "FLEET_MANAGER" || user?.role === "DRIVER" || user?.role === "FINANCIAL_ANALYST" ? (
+            {can(user?.role, "fuel.create") ? (
               <button
                 onClick={() => setShowFuelForm(!showFuelForm)}
                 className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
@@ -219,14 +236,14 @@ export default function FuelExpensesPage() {
       )}
 
       {/* Expenses Tab */}
-      {activeTab === "expenses" && (
+      {activeTab === "expenses" && canViewExpenses && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Expenses</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">₹{totalExpenseCost.toFixed(2)}</p>
             </div>
-            {user?.role === "FLEET_MANAGER" || user?.role === "FINANCIAL_ANALYST" ? (
+            {can(user?.role, "expenses.create") ? (
               <button
                 onClick={() => setShowExpenseForm(!showExpenseForm)}
                 className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
