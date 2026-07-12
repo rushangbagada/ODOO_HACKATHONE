@@ -129,7 +129,7 @@ export default function FuelExpensesPage() {
       {/* Fuel Logs Tab */}
       {activeTab === "fuel" && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Fuel Cost</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">₹{totalFuelCost.toFixed(2)}</p>
@@ -137,7 +137,7 @@ export default function FuelExpensesPage() {
             {user?.role === "FLEET_MANAGER" || user?.role === "DRIVER" || user?.role === "FINANCIAL_ANALYST" ? (
               <button
                 onClick={() => setShowFuelForm(!showFuelForm)}
-                className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
+                className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
               >
                 <Plus size={20} />
                 Add Fuel Log
@@ -221,7 +221,7 @@ export default function FuelExpensesPage() {
       {/* Expenses Tab */}
       {activeTab === "expenses" && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Expenses</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">₹{totalExpenseCost.toFixed(2)}</p>
@@ -229,7 +229,7 @@ export default function FuelExpensesPage() {
             {user?.role === "FLEET_MANAGER" || user?.role === "FINANCIAL_ANALYST" ? (
               <button
                 onClick={() => setShowExpenseForm(!showExpenseForm)}
-                className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
+                className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-full hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg"
               >
                 <Plus size={20} />
                 Add Expense

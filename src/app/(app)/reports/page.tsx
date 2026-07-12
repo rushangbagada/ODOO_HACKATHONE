@@ -72,7 +72,7 @@ export default function ReportsPage() {
     
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Performance Reports</h1>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1">
@@ -169,7 +169,7 @@ export default function ReportsPage() {
 
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Safety & Compliance Reports</h1>
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1">
@@ -371,7 +371,7 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Reports & Analytics</h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1">
@@ -381,7 +381,7 @@ export default function ReportsPage() {
         </div>
         <button
           onClick={() => window.print()}
-          className="no-print flex items-center gap-2 bg-gray-700 dark:bg-gray-600 text-white px-5 py-2.5 rounded-full hover:bg-gray-800 dark:hover:bg-gray-700 text-sm transition-all shadow-md font-medium"
+          className="no-print flex items-center justify-center gap-2 bg-gray-700 dark:bg-gray-600 text-white px-5 py-2.5 rounded-full hover:bg-gray-800 dark:hover:bg-gray-700 text-sm transition-all shadow-md font-medium"
         >
           <Printer size={16} /> Print / Save as PDF
         </button>
