@@ -97,9 +97,9 @@ export async function requireAuth() {
   return user;
 }
 
-export async function requireAdmin() {
+export async function checkRole(allowedRoles: string[]) {
   const user = await requireAuth();
-  if (user.role !== "ADMIN") {
+  if (!allowedRoles.includes(user.role)) {
     throw new Error("Forbidden");
   }
   return user;

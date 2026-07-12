@@ -3,31 +3,144 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
-  USER
-  ADMIN
+  FLEET_MANAGER
+  DRIVER
+  SAFETY_OFFICER
+  FINANCIAL_ANALYST
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  ON_TRIP
+  IN_SHOP
+  RETIRED
+}
+
+enum DriverStatus {
+  AVAILABLE
+  ON_TRIP
+  OFF_DUTY
+  SUSPENDED
+}
+
+enum TripStatus {
+  DRAFT
+  DISPATCHED
+  COMPLETED
+  CANCELLED
+}
+
+enum MaintenanceStatus {
+  ACTIVE
+  CLOSED
+}
+
+enum ExpenseType {
+  TOLL
+  MAINTENANCE
+  OTHER
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  password      String
-  role          Role      @default(USER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  resetToken    PasswordResetToken?
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
 }
 
-model PasswordResetToken {
+model Vehicle {
+  id              String            @id @default(cuid())
+  regNumber       String            @unique
+  name            String
+  type            String
+  maxLoadCapacity Float
+  odometer        Float             @default(0)
+  acquisitionCost Float
+  status          VehicleStatus     @default(AVAILABLE)
+  region          String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  trips           Trip[]
+  maintenanceLogs MaintenanceLog[]
+  fuelLogs        FuelLog[]
+  expenses        Expense[]
+}
+
+model Driver {
+  id                String       @id @default(cuid())
+  name              String
+  licenseNumber     String       @unique
+  licenseCategory   String
+  licenseExpiryDate DateTime
+  contactNumber     String
+  safetyScore       Int          @default(100)
+  status            DriverStatus @default(AVAILABLE)
+  region            String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  trips             Trip[]
+}
+
+model Trip {
+  id              String     @id @default(cuid())
+  source          String
+  destination     String
+  vehicleId       String
+  driverId        String
+  cargoWeight     Float
+  plannedDistance Float
+  actualDistance  Float?
+  startOdometer   Float?
+  endOdometer     Float?
+  fuelConsumed    Float?
+  revenue         Float      @default(0)
+  status          TripStatus @default(DRAFT)
+  createdAt       DateTime   @default(now())
+  dispatchedAt    DateTime?
+  completedAt     DateTime?
+  cancelledAt     DateTime?
+  vehicle         Vehicle    @relation(fields: [vehicleId], references: [id])
+  driver          Driver     @relation(fields: [driverId], references: [id])
+  fuelLogs        FuelLog[]
+}
+
+model MaintenanceLog {
+  id          String             @id @default(cuid())
+  vehicleId   String
+  type        String
+  description String?
+  cost        Float              @default(0)
+  status      MaintenanceStatus  @default(ACTIVE)
+  startDate   DateTime           @default(now())
+  endDate     DateTime?
+  vehicle     Vehicle            @relation(fields: [vehicleId], references: [id])
+}
+
+model FuelLog {
   id        String   @id @default(cuid())
-  token     String   @unique
-  expires   DateTime
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  vehicleId String
+  tripId    String?
+  liters    Float
+  cost      Float
+  date      DateTime @default(now())
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
+  trip      Trip?    @relation(fields: [tripId], references: [id])
+}
+
+model Expense {
+  id          String      @id @default(cuid())
+  vehicleId   String
+  type        ExpenseType
+  amount      Float
+  date        DateTime    @default(now())
+  description String?
+  vehicle     Vehicle     @relation(fields: [vehicleId], references: [id])
 }
