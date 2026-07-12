@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Truck, Users, Route, Wrench, Fuel, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Truck, Users, Route, Wrench, Fuel, BarChart3, UserCheck } from "lucide-react";
 import { can } from "@/lib/permissions";
 import clsx from "clsx";
 
@@ -23,6 +23,7 @@ const navItems = [
   { label: "Maintenance", href: "/maintenance", icon: Wrench, resource: "maintenance", action: "read" },
   { label: "Fuel & Expenses", href: "/fuel-expenses", icon: Fuel, resource: "fuel", action: "read" },
   { label: "Reports", href: "/reports", icon: BarChart3, resource: "reports", action: "read" },
+  { label: "User Approval", href: "/admin/users", icon: UserCheck, resource: "admin", action: "read", roleOnly: "FLEET_MANAGER" },
 ];
 
 export function Sidebar({ user }: SidebarProps) {
@@ -36,7 +37,9 @@ export function Sidebar({ user }: SidebarProps) {
 
       <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-2">
         {navItems.map((item) => {
-          const hasAccess = can(user.role as any, `${item.resource}.${item.action}`);
+          const hasAccess = item.roleOnly
+            ? user.role === item.roleOnly
+            : can(user.role as any, `${item.resource}.${item.action}`);
           if (!hasAccess) return null;
 
           const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
