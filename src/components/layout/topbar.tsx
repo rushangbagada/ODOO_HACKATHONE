@@ -26,6 +26,7 @@ const navItems = [
   { label: "Maintenance", href: "/maintenance", resource: "maintenance" },
   { label: "Fuel & Expenses", href: "/fuel-expenses", resource: "fuel" },
   { label: "Reports", href: "/reports", resource: "reports" },
+  { label: "Admin Panel", href: "/admin/users", resource: "admin", roleOnly: "FLEET_MANAGER" },
 ];
 
 export function Topbar({ user }: TopbarProps) {
@@ -46,9 +47,12 @@ export function Topbar({ user }: TopbarProps) {
 
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
 
-  const visibleNavItems = navItems.filter((item) =>
-    can(user.role as any, `${item.resource}.read`)
-  );
+  const visibleNavItems = navItems.filter((item: any) => {
+    if (item.roleOnly) {
+      return user.role === item.roleOnly;
+    }
+    return can(user.role as any, `${item.resource}.read`);
+  });
 
   return (
     <div className="no-print bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 relative">

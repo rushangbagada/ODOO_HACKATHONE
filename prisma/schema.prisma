@@ -15,6 +15,12 @@ enum Role {
   FINANCIAL_ANALYST
 }
 
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum VehicleStatus {
   AVAILABLE
   ON_TRIP
@@ -53,6 +59,10 @@ model User {
   email               String               @unique
   password            String
   role                Role
+  status              UserStatus           @default(PENDING)
+  approvedAt          DateTime?
+  approvedBy          String?
+  rejectionReason     String?
   createdAt           DateTime             @default(now())
   passwordResetToken  PasswordResetToken?
 }
