@@ -29,6 +29,7 @@ const permissions: Record<Role, Record<string, boolean>> = {
   DRIVER: {
     "vehicles.read": true,
     "drivers.read": true,
+    "maintenance.read": true,
     "trips.read": true,
     "trips.create": true,
     "trips.update": true,

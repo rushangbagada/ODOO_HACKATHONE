@@ -21,6 +21,48 @@ export default function TripsPage() {
     plannedDistance: "",
   });
 
+  const [activeCompletionTrip, setActiveCompletionTrip] = useState<any | null>(null);
+  const [completionForm, setCompletionForm] = useState({
+    endOdometer: "",
+    fuelConsumed: "",
+    fuelCost: "",
+    revenue: "0",
+  });
+  const [submittingCompletion, setSubmittingCompletion] = useState(false);
+
+  const handleCompleteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeCompletionTrip) return;
+
+    const endOdo = parseFloat(completionForm.endOdometer);
+    const fuelCons = parseFloat(completionForm.fuelConsumed);
+    const fuelPrice = parseFloat(completionForm.fuelCost);
+    const revVal = parseFloat(completionForm.revenue || "0");
+
+    const startOdo = activeCompletionTrip.vehicle.odometer || 0;
+    if (endOdo < startOdo) {
+      toast.error(`End odometer (${endOdo}) cannot be less than current odometer (${startOdo})`);
+      return;
+    }
+
+    setSubmittingCompletion(true);
+    try {
+      await axios.post(`/api/trips/${activeCompletionTrip.id}/complete`, {
+        endOdometer: endOdo,
+        fuelConsumed: fuelCons,
+        fuelCost: fuelPrice,
+        revenue: revVal,
+      });
+      toast.success("Trip completed successfully");
+      setActiveCompletionTrip(null);
+      fetchTrips();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || "Failed to complete trip");
+    } finally {
+      setSubmittingCompletion(false);
+    }
+  };
+
   useEffect(() => {
     fetchUser();
     fetchTrips();
@@ -292,25 +334,15 @@ export default function TripsPage() {
                 {trip.status === "DISPATCHED" && (
                   <button
                     onClick={() => {
-                      const endOdometer = prompt("Enter end odometer reading:");
-                      const fuelConsumed = prompt("Enter fuel consumed (liters):");
-                      const fuelCost = prompt("Enter fuel cost:");
-                      const revenue = prompt("Enter revenue (optional):", "0");
-                      if (endOdometer && fuelConsumed && fuelCost) {
-                        axios.post(`/api/trips/${trip.id}/complete`, {
-                          endOdometer: parseFloat(endOdometer),
-                          fuelConsumed: parseFloat(fuelConsumed),
-                          fuelCost: parseFloat(fuelCost),
-                          revenue: parseFloat(revenue || "0"),
-                        }).then(() => {
-                          toast.success("Trip completed");
-                          fetchTrips();
-                        }).catch((error) => {
-                          toast.error(error.response?.data?.error || "Failed to complete trip");
-                        });
-                      }
+                      setActiveCompletionTrip(trip);
+                      setCompletionForm({
+                        endOdometer: String(trip.vehicle.odometer || 0),
+                        fuelConsumed: "",
+                        fuelCost: "",
+                        revenue: "0",
+                      });
                     }}
-                    className="flex items-center gap-1 bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
+                    className="flex items-center gap-1 bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition-colors"
                   >
                     <CheckCircle size={14} /> Complete
                   </button>
@@ -320,6 +352,115 @@ export default function TripsPage() {
           </div>
         ))}
       </div>
+
+      {/* Complete Trip Modal */}
+      {activeCompletionTrip && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full border border-gray-200 dark:border-gray-700 overflow-hidden p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-150 dark:border-gray-700 pb-3">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Complete Trip
+              </h2>
+              <button
+                type="button"
+                onClick={() => setActiveCompletionTrip(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="text-sm bg-indigo-50 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 p-3 rounded-lg border border-indigo-100 dark:border-indigo-900/60">
+              <p className="font-semibold">{activeCompletionTrip.source} ➜ {activeCompletionTrip.destination}</p>
+              <p className="text-xs mt-1">Vehicle: {activeCompletionTrip.vehicle.name} | Current Odometer: {activeCompletionTrip.vehicle.odometer} km</p>
+            </div>
+
+            <form onSubmit={handleCompleteSubmit} className="space-y-4">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">
+                    End Odometer (km)
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={completionForm.endOdometer}
+                    onChange={(e) => setCompletionForm({ ...completionForm, endOdometer: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    placeholder={`e.g. ${Number(activeCompletionTrip.vehicle.odometer || 0) + 100}`}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">
+                      Fuel Consumed (L)
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0.01"
+                      value={completionForm.fuelConsumed}
+                      onChange={(e) => setCompletionForm({ ...completionForm, fuelConsumed: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      placeholder="e.g. 25"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">
+                      Fuel Cost (₹)
+                    </label>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0.01"
+                      value={completionForm.fuelCost}
+                      onChange={(e) => setCompletionForm({ ...completionForm, fuelCost: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                      placeholder="e.g. 2250"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">
+                    Revenue Generated (₹)
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    value={completionForm.revenue}
+                    onChange={(e) => setCompletionForm({ ...completionForm, revenue: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    placeholder="e.g. 5000"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2 border-t border-gray-150 dark:border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => setActiveCompletionTrip(null)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingCompletion}
+                  className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-green-800/50 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  {submittingCompletion ? "Saving..." : "Complete Trip"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
