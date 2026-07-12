@@ -20,10 +20,10 @@ export async function calculateFuelEfficiency(vehicleId: string) {
     }),
   ]);
 
-  const totalDistance = trips.reduce((sum, t) => sum + (t.actualDistance || 0), 0);
+  const totalDistance = trips.reduce((sum, t) => sum + (t.actualDistance || t.plannedDistance || 0), 0);
   const totalFuel = fuelLogs.reduce((sum, f) => sum + f.liters, 0);
 
-  if (totalFuel === 0) return null;
+  if (totalFuel === 0 || totalDistance === 0) return null;
   return Math.round((totalDistance / totalFuel) * 100) / 100;
 }
 
@@ -81,7 +81,7 @@ export async function getPerVehicleReport() {
 
   return vehicles.map((vehicle) => {
     const completedTrips = vehicle.trips.filter((t) => t.status === "COMPLETED");
-    const totalDistance = completedTrips.reduce((sum, t) => sum + (t.actualDistance || 0), 0);
+    const totalDistance = completedTrips.reduce((sum, t) => sum + (t.actualDistance || t.plannedDistance || 0), 0);
     const totalFuelLiters = vehicle.fuelLogs.reduce((sum, f) => sum + f.liters, 0);
     const fuelCost = vehicle.fuelLogs.reduce((sum, f) => sum + f.cost, 0);
     const maintenanceCost = vehicle.maintenanceLogs.reduce((sum, m) => sum + m.cost, 0);
@@ -89,7 +89,7 @@ export async function getPerVehicleReport() {
     const revenue = completedTrips.reduce((sum, t) => sum + t.revenue, 0);
 
     const fuelEfficiency =
-      totalFuelLiters > 0 ? Math.round((totalDistance / totalFuelLiters) * 100) / 100 : null;
+      totalFuelLiters > 0 && totalDistance > 0 ? Math.round((totalDistance / totalFuelLiters) * 100) / 100 : null;
     const operationalCost = fuelCost + maintenanceCost + expenseCost;
     const roi =
       vehicle.acquisitionCost > 0
