@@ -44,16 +44,23 @@ export default function DriverDetailClient({ driverId }: { driverId: string }) {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.patch(`/api/drivers/${driverId}`, {
-        name: formData.name,
-        licenseNumber: formData.licenseNumber,
-        licenseCategory: formData.licenseCategory,
-        licenseExpiryDate: formData.licenseExpiryDate,
-        contactNumber: formData.contactNumber,
-        safetyScore: parseInt(formData.safetyScore),
-        region: formData.region,
-        status: formData.status,
-      });
+      const payload =
+        user?.role === "SAFETY_OFFICER"
+          ? {
+              safetyScore: parseInt(formData.safetyScore),
+              status: formData.status,
+            }
+          : {
+              name: formData.name,
+              licenseNumber: formData.licenseNumber,
+              licenseCategory: formData.licenseCategory,
+              licenseExpiryDate: formData.licenseExpiryDate,
+              contactNumber: formData.contactNumber,
+              safetyScore: parseInt(formData.safetyScore),
+              region: formData.region,
+              status: formData.status,
+            };
+      await axios.patch(`/api/drivers/${driverId}`, payload);
       toast.success("Driver updated successfully");
       setEditing(false);
       fetchDriver();
@@ -141,62 +148,71 @@ export default function DriverDetailClient({ driverId }: { driverId: string }) {
 
       {editing ? (
         <form onSubmit={handleUpdate} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow space-y-4">
+          {user?.role === "SAFETY_OFFICER" && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              As Safety Officer you can update this driver's safety score and status (e.g. to suspend or reinstate them).
+            </p>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Name
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                License Number
-              </label>
-              <input
-                type="text"
-                value={formData.licenseNumber}
-                onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                License Category
-              </label>
-              <input
-                type="text"
-                value={formData.licenseCategory}
-                onChange={(e) => setFormData({ ...formData, licenseCategory: e.target.value })}
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                License Expiry Date
-              </label>
-              <input
-                type="date"
-                value={formData.licenseExpiryDate?.split('T')[0]}
-                onChange={(e) => setFormData({ ...formData, licenseExpiryDate: e.target.value })}
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Contact Number
-              </label>
-              <input
-                type="tel"
-                value={formData.contactNumber}
-                onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
+            {user?.role !== "SAFETY_OFFICER" && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    License Number
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.licenseNumber}
+                    onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    License Category
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.licenseCategory}
+                    onChange={(e) => setFormData({ ...formData, licenseCategory: e.target.value })}
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    License Expiry Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.licenseExpiryDate?.split('T')[0]}
+                    onChange={(e) => setFormData({ ...formData, licenseExpiryDate: e.target.value })}
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Contact Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={formData.contactNumber}
+                    onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+              </>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Safety Score (0-100)
@@ -210,17 +226,19 @@ export default function DriverDetailClient({ driverId }: { driverId: string }) {
                 className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Region
-              </label>
-              <input
-                type="text"
-                value={formData.region}
-                onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
+            {user?.role !== "SAFETY_OFFICER" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Region
+                </label>
+                <input
+                  type="text"
+                  value={formData.region}
+                  onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Status

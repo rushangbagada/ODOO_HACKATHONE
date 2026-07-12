@@ -58,7 +58,34 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Default for FLEET_MANAGER, DRIVER, and FINANCIAL_ANALYST: Full aggregate metrics
+    if (user.role === "DRIVER") {
+      const completedTrips = await prisma.trip.count({ where: { status: "COMPLETED" } });
+      const fleetUtilization = await calculateFleetUtilization();
+      const perVehicle = await getPerVehicleReport();
+
+      // Driver is a dispatcher role — operational visibility only, no revenue/
+      // expense/ROI/acquisition-cost data (that's Financial Analyst's scope).
+      const perVehicleOperational = perVehicle.map((v) => ({
+        vehicleId: v.vehicleId,
+        regNumber: v.regNumber,
+        name: v.name,
+        type: v.type,
+        status: v.status,
+        completedTrips: v.completedTrips,
+        totalDistance: v.totalDistance,
+        totalFuelLiters: v.totalFuelLiters,
+        fuelEfficiency: v.fuelEfficiency,
+      }));
+
+      return NextResponse.json({
+        role: "DRIVER",
+        completedTrips,
+        fleetUtilization,
+        perVehicle: perVehicleOperational,
+      });
+    }
+
+    // Default for FLEET_MANAGER and FINANCIAL_ANALYST: full financial + aggregate metrics
     const completedTrips = await prisma.trip.findMany({
       where: { status: "COMPLETED" },
     });

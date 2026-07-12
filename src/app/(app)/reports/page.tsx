@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Download, Printer, Shield, FileText, AlertTriangle } from "lucide-react";
+import { Download, Printer, Shield, FileText, AlertTriangle, Route } from "lucide-react";
 import { LoadingPage } from "@/components/ui/loading";
 
 export default function ReportsPage() {
@@ -179,7 +179,123 @@ export default function ReportsPage() {
     );
   }
 
-  // Render Fleet Manager, Driver, and Financial Analyst View
+  // Render Driver View — operational visibility only, no revenue/expense/ROI data
+  if (summary.role === "DRIVER") {
+    const driverPerVehicle: any[] = summary.perVehicle || [];
+    const driverFuelEffData = driverPerVehicle
+      .filter((v) => v.fuelEfficiency !== null)
+      .map((v) => ({ name: v.regNumber, value: v.fuelEfficiency }));
+
+    const handleExportOperational = () => {
+      downloadCSV(
+        driverPerVehicle.map((v) => ({
+          "Reg Number": v.regNumber,
+          Name: v.name,
+          Type: v.type,
+          Status: v.status,
+          "Completed Trips": v.completedTrips,
+          "Total Distance (km)": v.totalDistance,
+          "Total Fuel (L)": v.totalFuelLiters,
+          "Efficiency (km/L)": v.fuelEfficiency ?? "N/A",
+        })),
+        "operational-summary"
+      );
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Operational Report</h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1">
+              <Route size={16} className="text-indigo-500" />
+              Logged in as Driver (Fleet Operations)
+            </p>
+          </div>
+          <button
+            onClick={() => window.print()}
+            className="no-print flex items-center gap-2 bg-gray-700 dark:bg-gray-600 text-white px-5 py-2.5 rounded-full hover:bg-gray-800 dark:hover:bg-gray-700 text-sm transition-all shadow-md font-medium"
+          >
+            <Printer size={16} /> Print Report
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Total Completed Trips</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">{summary.completedTrips || 0}</p>
+          </div>
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Fleet Utilization</p>
+            <p className="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{summary.fleetUtilization || 0}%</p>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Fuel Efficiency (km/L)</h2>
+          {driverFuelEffData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={driverFuelEffData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.1} />
+                <XAxis dataKey="name" stroke="#6b7280" />
+                <YAxis stroke="#6b7280" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'rgba(31, 41, 55, 0.95)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    color: '#fff'
+                  }}
+                />
+                <Bar dataKey="value" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">No fuel data recorded yet.</p>
+          )}
+          <div className="overflow-x-auto mt-4">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-50 dark:bg-gray-700/50">
+                <tr>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Vehicle</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Completed Trips</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Distance (km)</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Fuel (L)</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700 dark:text-gray-300">Efficiency (km/L)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                {driverPerVehicle.map((v) => (
+                  <tr key={v.vehicleId} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                    <td className="px-4 py-3 text-gray-900 dark:text-white">{v.name} ({v.regNumber})</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{v.status}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{v.completedTrips}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{v.totalDistance}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{v.totalFuelLiters}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{v.fuelEfficiency ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="no-print bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Export Data</h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">Export the operational summary in CSV format:</p>
+          <button
+            onClick={handleExportOperational}
+            className="bg-indigo-600 text-white px-5 py-2.5 rounded-full hover:bg-indigo-700 text-sm flex items-center gap-2 transition-all shadow-md font-medium"
+          >
+            <Download size={16} /> Export Operational Summary
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Render Fleet Manager and Financial Analyst View
   const perVehicle: any[] = summary.perVehicle || [];
 
   const handleExportVehicles = () => {
@@ -251,7 +367,7 @@ export default function ReportsPage() {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Reports & Analytics</h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1">
             <FileText size={16} className="text-blue-500" />
-            Logged in as {summary.role === "FINANCIAL_ANALYST" ? "Financial Analyst" : summary.role === "DRIVER" ? "Driver" : "Fleet Manager"} (Full Fleet Analytics)
+            Logged in as {summary.role === "FINANCIAL_ANALYST" ? "Financial Analyst" : "Fleet Manager"} (Full Fleet Analytics)
           </p>
         </div>
         <button
