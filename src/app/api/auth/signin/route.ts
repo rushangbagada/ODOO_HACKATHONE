@@ -29,6 +29,20 @@ export async function POST(request: Request) {
       );
     }
 
+    if (user.status === "PENDING") {
+      return NextResponse.json(
+        { error: "Your account is pending approval. Please wait for an admin to review your request." },
+        { status: 403 }
+      );
+    }
+
+    if (user.status === "REJECTED") {
+      return NextResponse.json(
+        { error: "Your account has been rejected. Reason: " + (user.rejectionReason || "No reason provided") },
+        { status: 403 }
+      );
+    }
+
     await login(user);
 
     return NextResponse.json(

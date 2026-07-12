@@ -20,13 +20,15 @@ async function main() {
   // Hash password
   const hashedPassword = await bcrypt.hash(testPassword, 10);
 
-  // Create users
+  // Create users - all approved for testing
   const fleetManager = await prisma.user.create({
     data: {
       email: "fleet@transitops.com",
       name: "Fleet Manager",
       password: hashedPassword,
       role: "FLEET_MANAGER",
+      status: "APPROVED",
+      approvedAt: new Date(),
     },
   });
 
@@ -36,6 +38,8 @@ async function main() {
       name: "Driver",
       password: hashedPassword,
       role: "DRIVER",
+      status: "APPROVED",
+      approvedAt: new Date(),
     },
   });
 
@@ -45,6 +49,8 @@ async function main() {
       name: "Safety Officer",
       password: hashedPassword,
       role: "SAFETY_OFFICER",
+      status: "APPROVED",
+      approvedAt: new Date(),
     },
   });
 
@@ -54,6 +60,8 @@ async function main() {
       name: "Financial Analyst",
       password: hashedPassword,
       role: "FINANCIAL_ANALYST",
+      status: "APPROVED",
+      approvedAt: new Date(),
     },
   });
 
