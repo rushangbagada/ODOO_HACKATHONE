@@ -40,12 +40,11 @@ function SigninForm() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 min-h-screen">
-      <div className="max-w-md w-full space-y-8">
-        <div className="bg-white p-8 rounded-xl shadow-md space-y-8">
+    <div className="flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-80px)] bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+      <div className="max-w-md w-full space-y-6">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 space-y-8">
           <div>
-            <h1 className="text-center text-4xl font-bold text-gray-900 mb-2">TransitOps</h1>
-            <h2 className="text-center text-2xl font-bold text-gray-900">
+            <h2 className="text-center text-2xl font-bold text-gray-900 dark:text-white">
               Sign in to your account
             </h2>
           </div>
@@ -70,7 +69,7 @@ function SigninForm() {
                 <div className="flex justify-end">
                   <Link
                     href="/forgot-password"
-                    className="text-xs font-medium text-blue-600 hover:text-blue-500"
+                    className="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors"
                   >
                     Forgot your password?
                   </Link>
@@ -85,15 +84,24 @@ function SigninForm() {
             </div>
           </form>
 
-          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-            <p className="text-sm font-semibold text-blue-900 mb-3">Demo Credentials:</p>
-            <div className="space-y-2 text-xs text-blue-800">
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 p-4 rounded-xl">
+            <p className="text-sm font-semibold text-indigo-900 dark:text-indigo-200 mb-3">Demo Credentials:</p>
+            <div className="space-y-2 text-xs text-indigo-800 dark:text-indigo-300">
               <p><span className="font-medium">Fleet Manager:</span> fleet@transitops.com</p>
               <p><span className="font-medium">Driver:</span> driver@transitops.com</p>
               <p><span className="font-medium">Safety Officer:</span> safety@transitops.com</p>
               <p><span className="font-medium">Financial Analyst:</span> finance@transitops.com</p>
               <p><span className="font-medium">Password:</span> password123</p>
             </div>
+          </div>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Don't have an account?{" "}
+              <Link href="/signup" className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors">
+                Sign up
+              </Link>
+            </p>
           </div>
         </div>
       </div>
