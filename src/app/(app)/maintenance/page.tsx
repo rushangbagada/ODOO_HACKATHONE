@@ -7,6 +7,7 @@ import { Plus, CheckCircle } from "lucide-react";
 
 export default function MaintenancePage() {
   const [logs, setLogs] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [vehicles, setVehicles] = useState<any[]>([]);
@@ -18,9 +19,19 @@ export default function MaintenancePage() {
   });
 
   useEffect(() => {
+    fetchUser();
     fetchLogs();
     fetchVehicles();
   }, []);
+
+  const fetchUser = async () => {
+    try {
+      const response = await axios.get("/api/auth/verify-session");
+      setUser(response.data.user);
+    } catch (error) {
+      console.error("Failed to fetch user");
+    }
+  };
 
   const fetchLogs = async () => {
     try {
@@ -82,13 +93,17 @@ export default function MaintenancePage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Maintenance</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-        >
-          <Plus size={20} />
-          New Maintenance Log
-        </button>
+        {user?.role === "FLEET_MANAGER" ? (
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <Plus size={20} />
+            New Maintenance Log
+          </button>
+        ) : (
+          <div className="text-sm text-gray-500">View only</div>
+        )}
       </div>
 
       {showForm && (

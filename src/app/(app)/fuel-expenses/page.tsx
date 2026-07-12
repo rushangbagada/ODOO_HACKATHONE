@@ -8,6 +8,7 @@ import { Plus } from "lucide-react";
 export default function FuelExpensesPage() {
   const [fuelLogs, setFuelLogs] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"fuel" | "expenses">("fuel");
   const [vehicles, setVehicles] = useState<any[]>([]);
@@ -28,8 +29,18 @@ export default function FuelExpensesPage() {
   });
 
   useEffect(() => {
+    fetchUser();
     fetchData();
   }, []);
+
+  const fetchUser = async () => {
+    try {
+      const response = await axios.get("/api/auth/verify-session");
+      setUser(response.data.user);
+    } catch (error) {
+      console.error("Failed to fetch user");
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -122,13 +133,17 @@ export default function FuelExpensesPage() {
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Fuel Cost</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">₹{totalFuelCost.toFixed(2)}</p>
             </div>
-            <button
-              onClick={() => setShowFuelForm(!showFuelForm)}
-              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <Plus size={20} />
-              Add Fuel Log
-            </button>
+            {user?.role === "FLEET_MANAGER" || user?.role === "DRIVER" || user?.role === "FINANCIAL_ANALYST" ? (
+              <button
+                onClick={() => setShowFuelForm(!showFuelForm)}
+                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                <Plus size={20} />
+                Add Fuel Log
+              </button>
+            ) : (
+              <div className="text-sm text-gray-500">View only</div>
+            )}
           </div>
 
           {showFuelForm && (
@@ -210,13 +225,17 @@ export default function FuelExpensesPage() {
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Expenses</p>
               <p className="text-3xl font-bold text-gray-900 dark:text-white">₹{totalExpenseCost.toFixed(2)}</p>
             </div>
-            <button
-              onClick={() => setShowExpenseForm(!showExpenseForm)}
-              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <Plus size={20} />
-              Add Expense
-            </button>
+            {user?.role === "FLEET_MANAGER" || user?.role === "FINANCIAL_ANALYST" ? (
+              <button
+                onClick={() => setShowExpenseForm(!showExpenseForm)}
+                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                <Plus size={20} />
+                Add Expense
+              </button>
+            ) : (
+              <div className="text-sm text-gray-500">View only</div>
+            )}
           </div>
 
           {showExpenseForm && (
