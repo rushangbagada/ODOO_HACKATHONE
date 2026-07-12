@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { canUpdate } from "@/lib/permissions";
 import {
   validateCargoWeight,
@@ -11,10 +11,11 @@ import {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
+    const { id } = await params;
+    const user = await getAuthenticatedUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -24,7 +25,7 @@ export async function POST(
     }
 
     const trip = await prisma.trip.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { vehicle: true, driver: true },
     });
 
@@ -51,7 +52,7 @@ export async function POST(
     // Transaction: update trip, vehicle, and driver status
     const updated = await prisma.$transaction(async (tx) => {
       const updatedTrip = await tx.trip.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           status: "DISPATCHED",
           dispatchedAt: new Date(),

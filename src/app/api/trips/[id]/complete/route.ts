@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { canUpdate } from "@/lib/permissions";
 import { z } from "zod";
 
@@ -13,10 +13,11 @@ const completeTripSchema = z.object({
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await getCurrentUser();
+    const { id } = await params;
+    const user = await getAuthenticatedUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -26,7 +27,7 @@ export async function POST(
     }
 
     const trip = await prisma.trip.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { vehicle: true },
     });
 
@@ -49,7 +50,7 @@ export async function POST(
       const actualDistance = validatedData.endOdometer - (trip.startOdometer || trip.vehicle.odometer);
 
       const updatedTrip = await tx.trip.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           status: "COMPLETED",
           completedAt: new Date(),
@@ -80,7 +81,7 @@ export async function POST(
       await tx.fuelLog.create({
         data: {
           vehicleId: trip.vehicleId,
-          tripId: params.id,
+          tripId: id,
           liters: validatedData.fuelConsumed,
           cost: validatedData.fuelCost,
           date: new Date(),

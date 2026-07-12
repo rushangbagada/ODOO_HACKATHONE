@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { getAuthenticatedUser } from "@/lib/auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 
@@ -8,7 +8,12 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUser();
+  let user;
+  try {
+    user = await getAuthenticatedUser();
+  } catch (e) {
+    user = null;
+  }
 
   if (!user) {
     redirect("/signin");
