@@ -3,28 +3,81 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
+  /* Font Family */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  
+  /* Avrios-inspired Color System */
+  --color-dark: #0E1B16;
+  --color-accent: #D9FF5B;
+  --color-accent-dark: #C4E84F;
+  --color-bg-light: #F7F7F2;
+  --color-bg-cream: #FAFAF5;
+  --color-white: #FFFFFF;
+  --color-text-primary: #101418;
+  --color-text-secondary: #5A6169;
+  --color-border: #E5E7E0;
+  --color-border-dark: #374151;
+  --color-success: #2FA36B;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+  
+  /* Border Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.12);
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
+  --background: #F7F7F2;
+  --foreground: #101418;
 }
 
 .dark {
-  --background: #09090b;
-  --foreground: #f4f4f5;
+  --background: #0E1B16;
+  --foreground: #F7F7F2;
 }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
   transition: background-color 0.3s ease, color 0.3s ease;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Fix input placeholder visibility in dark mode */
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+  color: #9CA3AF;
+  opacity: 1;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder,
+.dark select::placeholder {
+  color: #6B7280;
+  opacity: 1;
 }
 
 @media print {
   .no-print {
     display: none !important;
+  }
+}
+
+/* Responsive Typography */
+@media (max-width: 768px) {
+  body {
+    font-size: 0.9375rem;
   }
 }
 

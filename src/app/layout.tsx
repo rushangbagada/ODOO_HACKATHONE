@@ -23,9 +23,8 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} bg-white dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 antialiased`}>
+      <body className={`${inter.className} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {!isAuthenticated && <AuthNavbar />}
           {children}
           <Toaster position="top-right" />
         </ThemeProvider>
