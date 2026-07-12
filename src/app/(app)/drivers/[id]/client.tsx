@@ -9,13 +9,24 @@ import { ArrowLeft, Edit2, AlertCircle } from "lucide-react";
 export default function DriverDetailClient({ driverId }: { driverId: string }) {
   const router = useRouter();
   const [driver, setDriver] = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<any>({});
 
   useEffect(() => {
+    fetchUser();
     fetchDriver();
   }, [driverId]);
+
+  const fetchUser = async () => {
+    try {
+      const response = await axios.get("/api/auth/verify-session");
+      setUser(response.data.user);
+    } catch (error) {
+      console.error("Failed to fetch user");
+    }
+  };
 
   const fetchDriver = async () => {
     try {
@@ -85,12 +96,16 @@ export default function DriverDetailClient({ driverId }: { driverId: string }) {
             <p className="text-gray-600 dark:text-gray-400">{driver.licenseNumber}</p>
           </div>
         </div>
-        <button
-          onClick={() => setEditing(!editing)}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center gap-2"
-        >
-          <Edit2 size={16} /> {editing ? "Cancel" : "Edit"}
-        </button>
+        {user?.role === "FLEET_MANAGER" || user?.role === "SAFETY_OFFICER" ? (
+          <button
+            onClick={() => setEditing(!editing)}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center gap-2"
+          >
+            <Edit2 size={16} /> {editing ? "Cancel" : "Edit"}
+          </button>
+        ) : (
+          <div className="text-sm text-gray-500">View only</div>
+        )}
       </div>
 
       {licenseExpired && (
