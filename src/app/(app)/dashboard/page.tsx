@@ -41,6 +41,23 @@ export default function Dashboard() {
 
   const { metrics, alerts, tripsByStatus, fleetComposition, utilizationTrend } = data;
 
+  // Custom tooltip to avoid rendering objects
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-sm text-gray-600 dark:text-gray-400">
+              {entry.name}: {entry.value}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   const KPICard = ({ label, value, icon: Icon, color }: any) => (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border-l-4" style={{ borderLeftColor: color }}>
       <div className="flex items-center justify-between">
@@ -129,7 +146,7 @@ export default function Dashboard() {
                 <Cell fill="#f59e0b" />
                 <Cell fill="#ef4444" />
               </Pie>
-              <Tooltip />
+              <Tooltip content={<CustomTooltip />} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -142,7 +159,7 @@ export default function Dashboard() {
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="type" />
               <YAxis />
-              <Tooltip />
+              <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="_count" fill="#3b82f6" />
             </BarChart>
           </ResponsiveContainer>
@@ -157,7 +174,7 @@ export default function Dashboard() {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
             <YAxis />
-            <Tooltip />
+            <Tooltip content={<CustomTooltip />} />
             <Legend />
             <Line type="monotone" dataKey="trips" stroke="#3b82f6" />
           </LineChart>

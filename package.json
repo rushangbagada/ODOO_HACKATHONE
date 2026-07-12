@@ -22,8 +22,8 @@
     "lucide-react": "^0.468.0",
     "next": "^15.1.4",
     "nodemailer": "^6.9.16",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-hook-form": "^7.54.1",
     "react-hot-toast": "^2.4.1",
     "recharts": "^2.10.3",
@@ -36,13 +36,13 @@
     "@types/cookie": "^0.6.0",
     "@types/node": "^22.10.2",
     "@types/nodemailer": "^6.4.17",
-    "@types/react": "^19.0.1",
-    "@types/react-dom": "^19.0.2",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
     "eslint": "^9.16.0",
     "eslint-config-next": "15.1.4",
     "prisma": "^6.1.0",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.7.2",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
   }
 }
